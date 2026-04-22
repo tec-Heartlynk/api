@@ -1,0 +1,22 @@
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { DocumentBuilder } from '@nestjs/swagger/dist/document-builder';
+import { SwaggerModule } from '@nestjs/swagger/dist';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  app.enableCors({ origin: '*' });
+  app.setGlobalPrefix('heartapi');
+  const config = new DocumentBuilder()
+    .setTitle('Dating App API')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('heartapi', app, document);
+
+  await app.listen(3000);
+}
+bootstrap();

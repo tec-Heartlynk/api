@@ -1,23 +1,51 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { User, Role } from './user.entity';
+import { CreateUserDto } from './dto/register.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private repo: Repository<User>,
+    private userRepo: Repository<User>,
   ) {}
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.repo.findOne({
-      where: { email },
-    });
+  // 🆕 CREATE USER (OTP FLOW)
+  async createUser(email: string) {
+    try {
+      email = email.toLowerCase().trim();
+
+      // check existing user
+      const existing = await this.userRepo.findOne({
+        where: { email },
+      });
+
+      if (existing) {
+        return existing; // already user exists, return same
+      }
+
+      const user = this.userRepo.create({
+        email,
+        role: Role.USER,
+        isActive: true,
+        isBlocked: false,
+      });
+
+      return await this.userRepo.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException('User creation failed');
+    }
   }
 
-  async create(data: Partial<User>): Promise<User> {
-    const user = this.repo.create(data);
-    return this.repo.save(user);
+  // 🔍 FIND USER
+  findByEmail(email: string) {
+    return this.userRepo.findOne({
+      where: { email: email.toLowerCase().trim() },
+    });
   }
 }

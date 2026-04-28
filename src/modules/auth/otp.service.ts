@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 
+
 @Injectable()
 export class OtpService {
   constructor(
@@ -58,6 +59,12 @@ export class OtpService {
     async updateOtp(data: any) {
         return this.repo.save(data);
       }
+
+    async findByEmail(email: string) {
+    return this.repo.findOne({
+      where: { email },
+    });
+  }
 
 
     //REMOVE OTPs after expiry CHECK EVERY MINUTE

@@ -2,40 +2,43 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from './modules/users/user.module';
+import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { ProfilesModule } from './modules/profiles/profiles.module';
+//import { ProfilesModule } from './modules/profiles/profiles.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ProfileModule } from './modules/profile/profile.module';
 
 
 
 @Module({
   imports: [
-     TypeOrmModule.forRootAsync({
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+
+    TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST'),
-        port: Number(config.get<string>('DB_PORT')), // ✅ convert
-        username: config.get<string>('DB_USER'),
-        password: config.get<string>('DB_PASS'),
-        database: config.get<string>('DB_NAME'),
+        host: config.get('DB_HOST'),
+        port: Number(config.get('DB_PORT')),
+        username: config.get('DB_USER'),
+        password: config.get('DB_PASS'),
+        database: config.get('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true, // ⚠️ dev only
+        synchronize: true,
+        
       }),
     }),
 
     AuthModule,
-    UserModule,    
-    ProfilesModule,
-    ConfigModule.forRoot({
-      isGlobal: true, // ✅ THIS IS IMPORTANT
-    }),
+    UsersModule,
+    
     ScheduleModule.forRoot(),
+    
+    ProfileModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

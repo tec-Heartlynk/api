@@ -33,4 +33,19 @@ export class MailService {
       html: `<h2>Your OTP is: ${otp}</h2>`,
     });
   }
+
+  async sendRegistrationEmail(email: string) {
+    await this.transporter.sendMail({
+      from: this.configService.get<string>('MAIL_FROM'),
+      to: email,
+      subject: 'Registration Successful',
+      html: `
+        <h2>Welcome 🎉</h2>
+        <p>Your account has been successfully created.</p>
+      `,
+    });
+  }
+
+
+
 }

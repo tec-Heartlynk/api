@@ -1,26 +1,48 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToOne,
+} from 'typeorm';
+
+import { Profile } from '../profile/profile.entity';
 
 export enum Role {
-  USER = 'user',
-  ADMIN = 'admin',
+  USER = 'USER',
+  ADMIN = 'ADMIN',
 }
 
-@Entity()
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
-  name!: string;
-
   @Column({ unique: true })
   email!: string;
 
-  @Column()
-  password!: string;
-
-  @Column({ type: 'enum', enum: Role, default: Role.USER })
+  @Column({
+    type: 'enum',
+    enum: Role,
+    default: Role.USER,
+  })
   role!: Role;
+
+  @Column({ default: true })
+  isActive!: boolean;
+
+  @Column({ default: false })
+  isBlocked!: boolean;
+
+  // 📅 TIMESTAMPS
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+
+  // 👇 ADD THIS
+  @OneToOne(() => Profile, (profile) => profile.user)
+  profile!: Profile;
 }
-
-

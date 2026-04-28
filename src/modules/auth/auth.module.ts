@@ -7,18 +7,33 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OtpService } from './otp.service';
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { BlacklistModule } from '../blacklist/blacklist.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Otp]),
     UsersModule,
     MailModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '7d' },
+    BlacklistModule,
+
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: Number(config.get('JWT_EXPIRES_IN_SECONDS') ?? 604800),
+        },
+      }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, OtpService],
+  providers: [AuthService, OtpService, JwtStrategy],
 })
-export class AuthModule {}
+export class AuthModule {
+  constructor(private configService: ConfigService) {
+    console.log('JWT_SECRET 👉', this.configService.get('JWT_SECRET'));
+  }
+}

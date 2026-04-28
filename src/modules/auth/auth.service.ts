@@ -10,6 +10,11 @@ import { MailService } from '../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Otp } from './entities/otp.entity';
+import { BlacklistService } from '../blacklist/blacklist.service'; // 👈 ADD
+ 
 
 @Injectable()
 export class AuthService {
@@ -19,6 +24,9 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
     private configService: ConfigService,
+    @InjectRepository(Otp)
+    private otpRepo: Repository<Otp>,
+    private blacklistService: BlacklistService, // 👈 ADD
   ) {}
 
   // 🔥 1. SEND OTP (DTO)
@@ -27,8 +35,8 @@ export class AuthService {
       let email = dto.email.toLowerCase().trim();
 
       // ✅ Check user exists
-      const existingUser = await this.usersService.findByEmail(email);
-      if (existingUser) {
+      const existingUserotp = await this.otpRepo.findOne({ where: { email } });
+      if (existingUserotp) {
         throw new BadRequestException('Email already registered');
       }
 
@@ -86,8 +94,7 @@ export class AuthService {
     }
   }
 
-  // 🔐 2. VERIFY OTP (DTO)
-  async verifyOtp(dto: VerifyOtpDto) {
+ async verifyOtp(dto: VerifyOtpDto) {
   try {
     const email = dto.email.toLowerCase().trim();
 
@@ -97,20 +104,15 @@ export class AuthService {
       throw new BadRequestException('OTP not found');
     }
 
-    const maxAttempts = Number(
-      this.configService.get('OTP_MAX_ATTEMPTS') || 3,
-    );
-
-    const blockMinutes = Number(
-      this.configService.get('OTP_BLOCK_MINUTES') || 10,
-    );
+    const maxAttempts = Number(this.configService.get('OTP_MAX_ATTEMPTS') || 3);
+    const blockMinutes = Number(this.configService.get('OTP_BLOCK_MINUTES') || 10);
 
     // ❌ Block check
     if (otpRecord.blockedUntil && new Date() < otpRecord.blockedUntil) {
       throw new BadRequestException('Too many attempts. Try later');
     }
 
-    // ❌ Expired
+    // ❌ Expired check
     if (new Date() > otpRecord.expiresAt) {
       throw new BadRequestException('OTP expired');
     }
@@ -130,18 +132,38 @@ export class AuthService {
       throw new BadRequestException('Invalid OTP');
     }
 
-    // ✅ Success
+    // ✅ OTP VERIFIED
     otpRecord.verified = true;
     otpRecord.attempts = 0;
     otpRecord.blockedUntil = null;
 
     await this.otpService.updateOtp(otpRecord);
 
+    // 🔥 CHECK USER EXIST OR CREATE
+    let user = await this.usersService.findByEmail(email);
+
+    let isNewUser = false;
+
+    if (!user) {
+      user = await this.usersService.createUser(email);
+      isNewUser = true;
+    }
+
+    // 🔐 GENERATE JWT TOKEN
+    const token = this.jwtService.sign({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
     return {
       success: true,
-      message: 'OTP verified successfully',
-      nextStep: 'REGISTER', // 🔥 IMPORTANT
-      email: email, // pass to frontend
+      message: isNewUser
+        ? 'OTP verified & new user created'
+        : 'OTP verified & user logged in',
+      user,
+      token,
+      isNewUser, // 👈 useful for frontend
     };
   } catch (error) {
     console.error('VERIFY OTP ERROR:', error);
@@ -152,10 +174,39 @@ export class AuthService {
   }
 }
 
+async checkEmail(email: string) {
+    const otp = await this.otpService.findByEmail(email);
 
+    if (otp) {
+      throw new Error('OTP already exists');
+    }
+  }
 
+//Logout
 
+async logout(token: string) {
+  try {
+    const decoded: any = this.jwtService.decode(token);
 
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    await this.blacklistService.add(token, expiresAt);
+
+    return {
+      success: true,
+      message: 'Logged out successfully',
+    };
+  } catch (error) {
+    throw new InternalServerErrorException('Logout failed');
+  }
+}
 
 
 }
+
+
+
+
+
+
+

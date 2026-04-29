@@ -8,8 +8,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ProfileModule } from './modules/profile/profile.module';
-
-
+import { OptionModule } from './modules/questions_option/option/option.module';
+import { OptionCategoryModule } from './modules/questions_option/option_category/option_category.module';
 
 @Module({
   imports: [
@@ -29,16 +29,17 @@ import { ProfileModule } from './modules/profile/profile.module';
         database: config.get('DB_NAME'),
         autoLoadEntities: true,
         synchronize: true,
-        
       }),
     }),
 
     AuthModule,
     UsersModule,
-    
+
     ScheduleModule.forRoot(),
-    
+
     ProfileModule,
+    OptionModule,
+    OptionCategoryModule,
   ],
 })
 export class AppModule {}

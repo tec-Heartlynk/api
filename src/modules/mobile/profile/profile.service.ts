@@ -10,7 +10,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { mapFileUrls } from '../../common/utility/file-url.util';
+//import { mapFileUrls } from '../../common/utility/file-url.util';
 import { profile } from 'console';
 
 @Injectable()

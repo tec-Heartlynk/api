@@ -14,9 +14,9 @@ import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from '../../config/multer.config';
+import { multerConfig } from '../../../config/multer.config';
 
-@Controller('profile')
+@Controller('mobile/profile')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 

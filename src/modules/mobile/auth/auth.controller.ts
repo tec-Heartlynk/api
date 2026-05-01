@@ -5,7 +5,7 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { UseGuards, Req } from '@nestjs/common';
 import { JwtAuthGuard } from './strategies/jwt-auth.guard';
 
-@Controller('auth')
+@Controller('mobile/auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 

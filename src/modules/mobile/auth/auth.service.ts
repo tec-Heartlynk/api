@@ -6,14 +6,14 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { OtpService } from './otp.service';
 import { UsersService } from '../users/users.service';
-import { MailService } from '../mail/mail.service';
+import { MailService } from '../../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Otp } from './entities/otp.entity';
-import { BlacklistService } from '../blacklist/blacklist.service'; // 👈 ADD
+import { BlacklistService } from '../../blacklist/blacklist.service'; // 👈 ADD
 
 @Injectable()
 export class AuthService {

@@ -6,10 +6,10 @@ import { Otp } from './entities/otp.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OtpService } from './otp.service';
 import { UsersModule } from '../users/users.module';
-import { MailModule } from '../mail/mail.module';
+import { MailModule } from '../../mail/mail.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { BlacklistModule } from '../blacklist/blacklist.module';
+import { BlacklistModule } from '../../blacklist/blacklist.module';
 
 @Module({
   imports: [

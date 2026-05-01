@@ -2,7 +2,7 @@ import { Controller, Post, Get, Req, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
 
-@Controller('users')
+@Controller('mobile/users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 

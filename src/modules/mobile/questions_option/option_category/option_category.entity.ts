@@ -1,5 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { CategoryQuestionOption } from '../option/option.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
+
+import { CategoryQuestionOption } from '../option/category-question-option.entity';
 
 @Entity('category_options')
 export class OptionCategory {
@@ -9,7 +17,7 @@ export class OptionCategory {
   @Column()
   title!: string;
 
-  @Column()
+  @Column({ unique: true })
   slug!: string;
 
   @Column({ nullable: true })
@@ -17,4 +25,8 @@ export class OptionCategory {
 
   @Column({ default: 0 })
   sort_order!: number;
+
+  // ✅ ADD THIS
+  @OneToMany(() => CategoryQuestionOption, (option) => option.option_category)
+  options!: CategoryQuestionOption[];
 }

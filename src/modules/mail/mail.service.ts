@@ -26,24 +26,34 @@ export class MailService {
   }
 
   async sendOtp(email: string, otp: string) {
-    await this.transporter.sendMail({
-      from: this.configService.get<string>('MAIL_FROM'),
-      to: email,
-      subject: 'Your OTP Code',
-      html: `<h2>Your OTP is: ${otp}</h2>`,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('MAIL_FROM'),
+        to: email,
+        subject: 'Your OTP Code',
+        html: `<h2>Your OTP is: ${otp}</h2>`,
+      });
+    } catch (error) {
+      console.error('Mail sending failed:', error.message);
+      throw new Error(`Failed to send OTP email: ${error.message}`);
+    }
   }
 
   async sendRegistrationEmail(email: string) {
-    await this.transporter.sendMail({
-      from: this.configService.get<string>('MAIL_FROM'),
-      to: email,
-      subject: 'Registration Successful',
-      html: `
-        <h2>Welcome 🎉</h2>
-        <p>Your account has been successfully created.</p>
-      `,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('MAIL_FROM'),
+        to: email,
+        subject: 'Registration Successful',
+        html: `
+          <h2>Welcome 🎉</h2>
+          <p>Your account has been successfully created.</p>
+        `,
+      });
+    } catch (error) {
+      console.error('Mail sending failed:', error.message);
+      throw new Error(`Failed to send registration email: ${error.message}`);
+    }
   }
 
 

@@ -9,8 +9,9 @@ import { EmployeeModule } from './modules/admin/employee/employee.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ProfileModule } from './modules/mobile/profile/profile.module';
-import { OptionModule } from './modules/mobile/questions_option/option/option.module';
+import { OptionModule } from './modules/mobile/questions_option/option/category-question-option.module';
 import { OptionCategoryModule } from './modules/mobile/questions_option/option_category/option_category.module';
+import { QuizModule } from './modules/mobile/quiz-question/quiz.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { OptionCategoryModule } from './modules/mobile/questions_option/option_c
     ProfileModule,
     OptionModule,
     OptionCategoryModule,
+    QuizModule,
   ],
 })
 export class AppModule {}

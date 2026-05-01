@@ -86,7 +86,16 @@ export class OptionCategoryService {
   // ✅ GET ALL
   async findAll() {
     try {
-      return await this.repo.find();
+      return await this.repo.find({
+        relations: {
+          options: true, // 🔥 nested relation
+        },
+        order: {
+          options: {
+            sort_order: 'ASC',
+          },
+        },
+      });
     } catch (error) {
       console.error('GET ALL ERROR:', error);
       throw new InternalServerErrorException('Failed to fetch categories');

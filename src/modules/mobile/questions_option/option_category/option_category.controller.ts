@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { JwtAuthGuard } from '../../auth/strategies/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../jwt/strategies/jwt-auth.guard';
 import { CreateOptionCategoryDto } from './dto/create-option-category.dto';
 import { UpdateOptionCategoryDto } from './dto/update-option-category.dto';
 import { OptionCategoryService } from './option_category.service';

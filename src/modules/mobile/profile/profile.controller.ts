@@ -12,7 +12,7 @@ import {
 import { ProfileService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
+import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../../config/multer.config';
 

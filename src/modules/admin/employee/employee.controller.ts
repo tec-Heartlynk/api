@@ -1,6 +1,6 @@
 import { Controller, Post, Get, Req, UseGuards, Body } from '@nestjs/common';
 import { EmployeesService } from './employee.service';
-import { JwtAuthGuard } from  '../../mobile/auth/strategies/jwt-auth.guard' // './../mobile/auth/strategies/jwt-auth.guard';
+import { JwtAuthGuard } from  '../../jwt/strategies/jwt-auth.guard' // './../mobile/auth/strategies/jwt-auth.guard';
 import { LoginEmployeeDto } from './dto/login.dto';
 import { CreateEmployeeDto } from './dto/register.dto';
 

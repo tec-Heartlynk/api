@@ -12,7 +12,7 @@ import {
 import { CategoryQuestionOptionService } from './category-question-option.service';
 import { CreateCategoryQuestionOptionDto } from './dto/create-category-question-option.dto';
 import { UpdateCategoryQuestionOptionDto } from './dto/update-category-question-option.dto';
-import { JwtAuthGuard } from '../../auth/strategies/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../jwt/strategies/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard) // 🔐 pura controller protected
 @Controller('mobile/category-question-options')

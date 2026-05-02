@@ -16,7 +16,7 @@ import { CreateQuizDto } from './dto/create-quiz.dto';
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 import { QuizCategory } from './quiz-category.enum';
 
-@Controller('mobile/quiz-questions')
+@Controller('admin/quiz-questions')
 export class QuizController {
   constructor(private readonly service: QuizService) {}
 

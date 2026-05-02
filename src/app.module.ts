@@ -11,6 +11,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ProfileModule } from './modules/mobile/profile/profile.module';
 import { OptionModule } from './modules/mobile/questions_option/option/category-question-option.module';
 import { OptionCategoryModule } from './modules/mobile/questions_option/option_category/option_category.module';
+import { OptionCategoryModule as AdminOptionCategoryModule } from './modules/admin/questions_option/option_category/option_category.module';
+import { OptionModule as AdminOptionModule } from './modules/admin/questions_option/option/category-question-option.module';
 import { QuizModule as AdminQuizModule } from './modules/admin/quiz-question/quiz.module';
 import { QuizModule } from './modules/mobile/quiz-question/quiz.module';
 
@@ -44,6 +46,8 @@ import { QuizModule } from './modules/mobile/quiz-question/quiz.module';
     ProfileModule,
     OptionModule,
     OptionCategoryModule,
+    AdminOptionCategoryModule,
+    AdminOptionModule,
     AdminQuizModule,
     QuizModule,
   ],

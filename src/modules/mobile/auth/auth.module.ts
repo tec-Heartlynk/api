@@ -32,8 +32,4 @@ import { BlacklistModule } from '../../blacklist/blacklist.module';
   controllers: [AuthController],
   providers: [AuthService, OtpService, JwtStrategy],
 })
-export class AuthModule {
-  constructor(private configService: ConfigService) {
-    console.log('JWT_SECRET 👉', this.configService.get('JWT_SECRET'));
-  }
-}
+export class AuthModule {}

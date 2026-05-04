@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 
 import { Profile } from '../profile/profile.entity';
+import { UserSettings } from '../user-settings/settings.entity';
 
 export enum Role {
   USER = 'USER',
@@ -46,4 +47,8 @@ export class User {
   // 👇 ADD THIS
   @OneToOne(() => Profile, (profile) => profile.user)
   profile!: Profile;
+
+  //UserSettings relation
+  @OneToOne(() => UserSettings, (settings) => settings.user)
+  settings!: UserSettings;
 }

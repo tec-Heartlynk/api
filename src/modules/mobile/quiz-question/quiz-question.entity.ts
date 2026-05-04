@@ -19,6 +19,9 @@ export class QuizQuestion {
   @Column({ default: 0 })
   sort_order!: number;
 
+  @Column({ type: 'boolean', default: true, nullable: false })
+  active!: boolean;
+
   @OneToMany(() => QuizOption, (opt) => opt.question, {
     cascade: true,
   })

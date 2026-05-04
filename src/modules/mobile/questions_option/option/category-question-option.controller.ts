@@ -7,6 +7,7 @@ import {
   Delete,
   Patch,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 
 import { CategoryQuestionOptionService } from './category-question-option.service';
@@ -32,6 +33,13 @@ export class CategoryQuestionOptionController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(+id);
+  }
+
+  @Get('category/:option_category_id')
+  findByCategory(
+    @Param('option_category_id', ParseIntPipe) option_category_id: number,
+  ) {
+    return this.service.findByCategoryId(option_category_id);
   }
 
   @Patch(':id')

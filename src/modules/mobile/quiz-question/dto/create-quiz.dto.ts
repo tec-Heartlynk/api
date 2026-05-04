@@ -6,6 +6,7 @@ import {
   ArrayMinSize,
   IsOptional,
   IsNumber,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -24,8 +25,12 @@ export class CreateQuizDto {
   @IsNumber()
   sort_order?: number;
 
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean;
+
   @ValidateNested({ each: true })
   @Type(() => CreateQuizOptionDto)
-  @ArrayMinSize(1) // minimum 1 option required
+  @ArrayMinSize(1)
   options!: CreateQuizOptionDto[];
 }

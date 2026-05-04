@@ -15,6 +15,9 @@ import { OptionCategoryModule as AdminOptionCategoryModule } from './modules/adm
 import { OptionModule as AdminOptionModule } from './modules/admin/questions_option/option/category-question-option.module';
 import { QuizModule as AdminQuizModule } from './modules/admin/quiz-question/quiz.module';
 import { QuizModule } from './modules/mobile/quiz-question/quiz.module';
+import { SettingsModule } from './modules/mobile/user-settings/settings.module';
+import { UserPreferenceModule } from './modules/mobile/user-preference/user-preference.module';
+import { UserPreferenceQuestionAnswerModule } from './modules/mobile/user-preference-question-answer/user-preference-question-answer.module';
 
 @Module({
   imports: [
@@ -50,6 +53,9 @@ import { QuizModule } from './modules/mobile/quiz-question/quiz.module';
     AdminOptionModule,
     AdminQuizModule,
     QuizModule,
+    SettingsModule,
+    UserPreferenceModule,
+    UserPreferenceQuestionAnswerModule,
   ],
 })
 export class AppModule {}

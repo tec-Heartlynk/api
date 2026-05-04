@@ -15,6 +15,7 @@ import { QuizService } from './quiz.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 import { QuizCategory } from './quiz-category.enum';
+import { UpdateQuizDto } from './dto/update-quiz.dto';
 
 @Controller('mobile/quiz-questions')
 export class QuizController {
@@ -52,7 +53,7 @@ export class QuizController {
   // 🔐 UPDATE
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateQuizDto) {
+  update(@Param('id') id: number, @Body() dto: UpdateQuizDto) {
     return this.service.update(id, dto);
   }
 

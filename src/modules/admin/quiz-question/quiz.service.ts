@@ -37,6 +37,7 @@ export class QuizService {
       const question = new QuizQuestion();
       question.question = dto.question;
       question.category = dto.category;
+      question.active = dto.active ?? true;
 
       question.options = dto.options.map((opt) => {
         if (!opt.option_name) {
@@ -143,6 +144,9 @@ export class QuizService {
 
       question.question = dto.question;
       question.category = dto.category;
+      if (dto.active !== undefined) {
+        question.active = dto.active;
+      }
 
       // delete old options
       await this.optionRepo.delete({ question: { id } });

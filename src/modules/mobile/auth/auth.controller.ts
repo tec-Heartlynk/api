@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { GoogleSignInDto } from './dto/google-signin.dto';
 import { UseGuards, Req } from '@nestjs/common';
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 
@@ -19,6 +20,12 @@ export class AuthController {
   @Post('verify-otp')
   verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto);
+  }
+
+  // sign in with google
+  @Post('google')
+  verifyGoogle(@Body() dto: GoogleSignInDto) {
+    return this.authService.verifyGoogle(dto);
   }
 
   // 🔥 3. RESEND OTP

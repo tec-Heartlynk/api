@@ -10,10 +10,14 @@ import { MailService } from '../../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { GoogleSignInDto } from './dto/google-signin.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Otp } from './entities/otp.entity';
 import { BlacklistService } from '../../blacklist/blacklist.service'; // 👈 ADD
+import admin from '../../../config/firebase';
+import { request } from 'node:https';
+import { log } from 'node:console';
 
 @Injectable()
 export class AuthService {
@@ -202,6 +206,143 @@ export class AuthService {
       };
     } catch (error) {
       throw new InternalServerErrorException('Logout failed');
+    }
+  }
+
+  private normalizeGoogleToken(rawToken: string): string {
+    let token = rawToken.trim();
+
+    if (token.toLowerCase().startsWith('bearer ')) {
+      token = token.slice(7).trim();
+    }
+
+    const cleaned = token.replace(/\s+/g, '');
+
+    if (!/^[A-Za-z0-9_\-\.]+$/.test(cleaned)) {
+      throw new BadRequestException('Invalid Google token format');
+    }
+
+    return cleaned;
+  }
+
+  private fetchGoogleUserInfo(accessToken: string) {
+    return new Promise<{ email: string }>((resolve, reject) => {
+      const sanitizedToken = this.normalizeGoogleToken(accessToken);
+
+      if (!sanitizedToken) {
+        return reject(new BadRequestException('Invalid Google access token')); 
+      }
+
+      const options = {
+        hostname: 'www.googleapis.com',
+        path: '/oauth2/v3/userinfo',
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${sanitizedToken}`,
+        },
+      };
+
+      const req = request(options, (res) => {
+        let body = '';
+
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            return reject(new BadRequestException('Invalid Google access token')); 
+          }
+
+          try {
+            const parsed = JSON.parse(body);
+
+            if (!parsed.email) {
+              return reject(new BadRequestException('Email not found in Google access token response'));
+            }
+
+            resolve({ email: parsed.email });
+          } catch (err) {
+            reject(new BadRequestException('Failed to parse Google user info response'));
+          }
+        });
+      });
+
+      req.on('error', () => {
+        reject(new InternalServerErrorException('Failed to verify Google access token'));
+      });
+
+      req.end();
+    });
+  }
+
+  // 🔥 GOOGLE SIGN IN
+  async verifyGoogle(dto: GoogleSignInDto) {
+    try {
+      const rawToken =
+        dto.idToken ?? dto.accessToken ?? dto.token;
+
+      if (!rawToken) {
+        throw new BadRequestException('Google idToken, accessToken, or token is required');
+      }
+
+      const token = this.normalizeGoogleToken(rawToken);
+
+      if (!token) {
+        throw new BadRequestException('Google token is required');
+      }
+
+      let email: string;
+      let usedAccessToken = false;
+
+      try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+
+        if (!decodedToken.email) {
+          throw new BadRequestException('Email not found in Google ID token');
+        }
+
+        email = decodedToken.email.toLowerCase().trim();
+      } catch (err: any) {
+        if (err?.code === 'auth/argument-error') {
+          const userInfo = await this.fetchGoogleUserInfo(token);
+          email = userInfo.email.toLowerCase().trim();
+          usedAccessToken = true;
+        } else {
+          throw err;
+        }
+      }
+
+      let user = await this.usersService.findByEmail(email);
+      let isNewUser = false;
+
+      if (!user) {
+        user = await this.usersService.createUser(email);
+        isNewUser = true;
+      }
+
+      const jwtToken = this.jwtService.sign({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      });
+
+      return {
+        success: true,
+        message: isNewUser
+          ? 'Google sign-in successful & new user created'
+          : 'Google sign-in successful & user logged in',
+        user,
+        token: jwtToken,
+        isNewUser,
+        authMethod: usedAccessToken ? 'google-access-token' : 'firebase-id-token',
+      };
+    } catch (error) {
+      console.error('GOOGLE SIGN IN ERROR:', error);
+
+      if (error instanceof BadRequestException) throw error;
+
+      throw new InternalServerErrorException('Google sign-in failed');
     }
   }
 }

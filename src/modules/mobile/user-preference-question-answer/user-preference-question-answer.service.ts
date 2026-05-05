@@ -1,63 +1,101 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { UserPreferenceQuestionAnswer } from './user-preference-question-answer.entity';
-import { CreateUserPreferenceQuestionAnswerDto } from './dto/create-user-preference-question-answer.dto';
+import { BulkUserPreferenceQuestionAnswerDto } from './dto/bulk-user-preference.dto';
+import { QuizCategory } from '../quiz-question/quiz-category.enum';
+
+// 👉 IMPORT THIS
+import { QuizQuestion } from '../quiz-question/quiz-question.entity';
 
 @Injectable()
 export class UserPreferenceQuestionAnswerService {
   constructor(
     @InjectRepository(UserPreferenceQuestionAnswer)
-    private repo: Repository<UserPreferenceQuestionAnswer>,
+    private userRepo: Repository<UserPreferenceQuestionAnswer>,
+
+    @InjectRepository(QuizQuestion)
+    private questionRepo: Repository<QuizQuestion>,
   ) {}
 
-  // ✅ CREATE (insert/update)
-  async create(userId: number, dto: CreateUserPreferenceQuestionAnswerDto) {
-    const existing = await this.repo.findOne({
-      where: {
-        user_id: userId,
-        q_id: dto.q_id,
-        cat_slug: dto.cat_slug,
-      },
-    });
+  async create(userId: number, dto: BulkUserPreferenceQuestionAnswerDto) {
+    try {
+      const { cat_slug, data } = dto;
 
-    if (existing) {
-      existing.ans_id = dto.ans_id;
-      return this.repo.save(existing);
+      // 🔹 1. basic validation
+      if (!cat_slug || !Array.isArray(data) || data.length === 0) {
+        throw new BadRequestException('Invalid request body');
+      }
+
+      // 🔹 2. DB से category question count लो
+      const dbCount = await this.questionRepo.count({
+        where: {
+          category: cat_slug as QuizCategory,
+          active: true,
+        },
+      });
+
+      if (dbCount === 0) {
+        throw new BadRequestException(
+          `No active questions found for ${cat_slug}`,
+        );
+      }
+
+      // 🔹 3. JSON count check
+      if (data.length !== dbCount) {
+        throw new BadRequestException({
+          message: `${cat_slug} requires ${dbCount} questions`,
+          received: data.length,
+        });
+      }
+
+      const results: UserPreferenceQuestionAnswer[] = [];
+
+      // 🔹 4. Save / Update
+      for (const item of data) {
+        const existing = await this.userRepo.findOne({
+          where: {
+            user_id: userId,
+            q_id: item.q_id,
+            cat_slug: cat_slug,
+          },
+        });
+
+        if (existing) {
+          existing.ans_id = item.ans_id;
+          const updated = await this.userRepo.save(existing);
+          results.push(updated);
+        } else {
+          const newData = this.userRepo.create({
+            user_id: userId,
+            q_id: item.q_id,
+            ans_id: item.ans_id,
+            cat_slug: cat_slug,
+          });
+
+          const saved = await this.userRepo.save(newData);
+          results.push(saved);
+        }
+      }
+
+      return {
+        status: true,
+        message: `${cat_slug} data saved successfully`,
+        total_saved: results.length,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Something went wrong while saving user preferences',
+      );
     }
-
-    const data = this.repo.create({
-      user_id: userId,
-      ...dto,
-    });
-
-    return this.repo.save(data);
-  }
-
-  // ✅ READ ALL
-  async findAll(userId: number) {
-    return this.repo.find({
-      where: { user_id: userId },
-      order: { id: 'DESC' },
-    });
-  }
-
-  // ✅ READ ONE
-  async findOne(id: number, userId: number) {
-    const data = await this.repo.findOne({
-      where: { id, user_id: userId },
-    });
-
-    if (!data) throw new NotFoundException('Data not found');
-
-    return data;
-  }
-
-  // ❌ DELETE
-  async remove(id: number, userId: number) {
-    const data = await this.findOne(id, userId);
-    await this.repo.remove(data);
-
-    return { message: 'Deleted successfully' };
   }
 }

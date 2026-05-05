@@ -57,6 +57,28 @@ export class CategoryQuestionOptionService {
         : new InternalServerErrorException('Failed to fetch option');
     }
   }
+  //ind by option_category_id
+  async findByCategoryId(option_category_id: number) {
+    try {
+      const data = await this.repo.find({
+        where: { option_category_id },
+        order: { sort_order: 'ASC' },
+      });
+
+      if (!data || data.length === 0) {
+        throw new NotFoundException(
+          `No options found for category ID ${option_category_id}`,
+        );
+      }
+
+      return data;
+    } catch (error) {
+      console.error('FIND BY CATEGORY ERROR:', error);
+      throw error instanceof NotFoundException
+        ? error
+        : new InternalServerErrorException('Failed to fetch options');
+    }
+  }
 
   // UPDATE (PATCH recommended)
   async update(id: number, dto: UpdateCategoryQuestionOptionDto) {

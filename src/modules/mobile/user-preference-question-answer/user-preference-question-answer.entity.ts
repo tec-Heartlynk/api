@@ -1,7 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 
 @Entity('user_preferences_question_answer')
-@Unique(['user_id', 'q_id']) // same question duplicate nahi hoga
+@Index(['user_id', 'q_id', 'cat_slug'], { unique: true }) // ✅ यही लगाना है
 export class UserPreferenceQuestionAnswer {
   @PrimaryGeneratedColumn()
   id!: number;

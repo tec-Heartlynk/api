@@ -1,3 +1,4 @@
+import { string } from 'joi';
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('user_preferences')
@@ -10,6 +11,9 @@ export class UserPreference {
 
   @Column({ nullable: true })
   looking_for!: number;
+
+  @Column({ nullable: true })
+  feel!: string;
 
   @Column('simple-array', { nullable: true })
   interests!: number[];

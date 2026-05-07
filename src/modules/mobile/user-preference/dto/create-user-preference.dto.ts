@@ -1,39 +1,30 @@
-import { IsString, IsOptional, IsArray, IsNumber } from 'class-validator';
+import {
+  IsInt,
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
+
+import { Transform, Type } from 'class-transformer';
 
 export class CreateUserPreferenceDto {
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
   looking_for?: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsArray()
   interests?: number[];
 
-  @IsOptional()
-  @IsNumber()
-  height?: number;
+  @IsNotEmpty()
+  @IsString()
+  @Transform(({ value }) => value?.toLowerCase())
+  feel!: string;
 
   @IsOptional()
-  @IsNumber()
-  occupation?: number;
-
-  @IsOptional()
-  @IsNumber()
-  religion?: number;
-
-  @IsOptional()
-  @IsNumber()
-  ethnicity?: number;
-
-  @IsOptional()
-  @IsNumber()
-  education?: number;
-
-  @IsOptional()
-  @IsArray()
-  language?: number[];
-
-  @IsOptional()
-  @IsNumber()
-  political_learning?: number;
+  @Type(() => Number)
+  @IsInt()
+  screen_status?: number;
 }

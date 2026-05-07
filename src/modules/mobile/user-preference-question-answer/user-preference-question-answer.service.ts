@@ -9,8 +9,7 @@ import { Repository } from 'typeorm';
 import { UserPreferenceQuestionAnswer } from './user-preference-question-answer.entity';
 import { BulkUserPreferenceQuestionAnswerDto } from './dto/bulk-user-preference.dto';
 import { QuizCategory } from '../quiz-question/quiz-category.enum';
-
-// 👉 IMPORT THIS
+import { UsersService } from '../users/users.service';
 import { QuizQuestion } from '../quiz-question/quiz-question.entity';
 
 @Injectable()
@@ -18,6 +17,7 @@ export class UserPreferenceQuestionAnswerService {
   constructor(
     @InjectRepository(UserPreferenceQuestionAnswer)
     private userRepo: Repository<UserPreferenceQuestionAnswer>,
+    private userService: UsersService,
 
     @InjectRepository(QuizQuestion)
     private questionRepo: Repository<QuizQuestion>,
@@ -31,8 +31,6 @@ export class UserPreferenceQuestionAnswerService {
       if (!cat_slug || !Array.isArray(data) || data.length === 0) {
         throw new BadRequestException('Invalid request body');
       }
-
-      // 🔹 2. DB से category question count लो
       const dbCount = await this.questionRepo.count({
         where: {
           category: cat_slug as QuizCategory,
@@ -79,8 +77,12 @@ export class UserPreferenceQuestionAnswerService {
           });
 
           const saved = await this.userRepo.save(newData);
+
           results.push(saved);
         }
+      }
+      if (dto?.screen_status !== undefined) {
+        await this.userService.updateStatus(userId, dto.screen_status);
       }
 
       return {

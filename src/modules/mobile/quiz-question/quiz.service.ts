@@ -67,17 +67,6 @@ export class QuizService {
     }
   }
 
-  // 🔹 GET ALL
-
-  // async findAll(order: 'ASC' | 'DESC') {
-  //   return this.questionRepo.find({
-  //     where: { active: true }, // 👈 यही filter lagana hai
-  //     order: {
-  //       id: order || 'ASC',
-  //     },
-  //   });
-  // }
-
   async findAll(order: 'ASC' | 'DESC' = 'DESC') {
     try {
       return await this.questionRepo.find({

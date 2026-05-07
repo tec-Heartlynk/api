@@ -10,13 +10,18 @@ import { MailModule } from '../../mail/mail.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from '../../jwt/strategies/jwt.strategy';
 import { BlacklistModule } from '../../blacklist/blacklist.module';
+import { UserPreferenceModule } from '../user-preference/user-preference.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Otp]),
+
     UsersModule,
     MailModule,
     BlacklistModule,
+
+    // 👇 ✅ ADD HERE
+    UserPreferenceModule,
 
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -29,6 +34,7 @@ import { BlacklistModule } from '../../blacklist/blacklist.module';
       }),
     }),
   ],
+
   controllers: [AuthController],
   providers: [AuthService, OtpService, JwtStrategy],
 })

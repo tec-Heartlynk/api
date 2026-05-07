@@ -5,9 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserSettings } from './settings.entity';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserSettings])],
+  imports: [TypeOrmModule.forFeature([UserSettings]), UsersModule],
   controllers: [SettingsController],
   providers: [SettingsService],
 })

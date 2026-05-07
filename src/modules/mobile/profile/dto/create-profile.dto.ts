@@ -7,7 +7,10 @@ import {
   IsNumber,
   IsLatitude,
   IsLongitude,
+  IsInt,
+  IsNotEmpty,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateProfileDto {
   @IsOptional()
@@ -46,4 +49,9 @@ export class CreateProfileDto {
   @IsArray()
   @ArrayMaxSize(6, { message: 'Maximum 6 photos allowed' })
   photos?: string[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  screen_status?: number;
 }

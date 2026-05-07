@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { Profile } from './profile.entity';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UsersService } from '../users/users.service';
 import {
   InternalServerErrorException,
   NotFoundException,
@@ -19,6 +20,7 @@ export class ProfileService {
     @InjectRepository(Profile)
     private profileRepo: Repository<Profile>,
     private configService: ConfigService,
+    private userService: UsersService,
   ) {}
 
   // Create profile for user
@@ -59,9 +61,15 @@ export class ProfileService {
         user: { id: userId },
       });
 
-      return await this.profileRepo.save(profile);
+      const savedProfile = await this.profileRepo.save(profile);
+
+      if (dto.screen_status !== undefined) {
+        await this.userService.updateStatus(userId, dto.screen_status);
+      }
+
+      return savedProfile;
     } catch (error) {
-      console.error('CREATE PROFILE ERROR 👉', error);
+      //console.error('CREATE PROFILE ERROR 👉', error);
 
       if (error instanceof BadRequestException) throw error;
 
@@ -131,7 +139,7 @@ export class ProfileService {
 
       return await this.profileRepo.save(profile);
     } catch (error) {
-      console.error('UPDATE PROFILE ERROR 👉', error);
+      //console.error('UPDATE PROFILE ERROR 👉', error);
 
       if (
         error instanceof NotFoundException ||

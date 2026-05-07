@@ -4,6 +4,9 @@ import {
   IsString,
   IsDateString,
   IsNumber,
+  IsNotEmpty,
+  IsOptional,
+  IsInt,
 } from 'class-validator';
 
 import { Type } from 'class-transformer';
@@ -16,5 +19,8 @@ export class CreateUserDto {
   @IsEnum(Role)
   role: Role = Role.USER; // default USER
 
-  
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  screen_status?: number;
 }

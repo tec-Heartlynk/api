@@ -1,6 +1,6 @@
-// src/modules/settings/dto/update-settings.dto.ts
+import { IsBoolean, IsNotEmpty, IsOptional, IsInt } from 'class-validator';
 
-import { IsBoolean, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdateSettingsDto {
   @IsOptional()
@@ -42,4 +42,10 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsBoolean()
   political_learning?: boolean;
+
+  // ✅ IMPORTANT
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  screen_status?: number;
 }

@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { UserPreference } from './user-preference.entity';
 import { CreateUserPreferenceDto } from './dto/create-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
+import { UpdateUserExtraPreferenceDto } from './dto/update-user-extar-preference.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class UserPreferenceService {
   constructor(
     @InjectRepository(UserPreference)
     private repo: Repository<UserPreference>,
+    private userService: UsersService,
   ) {}
 
   // ✅ CREATE or UPDATE (UPSERT)
@@ -26,7 +29,13 @@ export class UserPreferenceService {
       user_id,
     });
 
-    return this.repo.save(data);
+    const saved = await this.repo.save(data);
+
+    if (dto.screen_status !== undefined) {
+      await this.userService.updateStatus(user_id, dto.screen_status);
+    }
+
+    return saved;
   }
 
   // ⚠️ OPTIONAL: Admin only (otherwise remove this API)
@@ -56,6 +65,31 @@ export class UserPreferenceService {
     await this.repo.update({ user_id }, dto);
 
     return this.findByUser(user_id);
+  }
+
+  // Update Extra Preferences
+
+  async updateExtraPreferences(
+    id: number,
+    user_id: number,
+    dto: UpdateUserExtraPreferenceDto,
+  ) {
+    const existing = await this.repo.findOne({
+      where: { id, user_id }, // 🔥 BOTH check
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Preferences not found');
+    }
+
+    const updated = this.repo.merge(existing, dto);
+    const saved = await this.repo.save(updated);
+
+    if (dto.screen_status !== undefined) {
+      await this.userService.updateStatus(user_id, dto.screen_status);
+    }
+
+    return saved;
   }
 
   // ✅ Better delete

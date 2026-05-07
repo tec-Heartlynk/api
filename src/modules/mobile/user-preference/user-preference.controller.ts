@@ -7,11 +7,14 @@ import {
   Delete,
   UseGuards,
   Req,
+  Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UserPreferenceService } from './user-preference.service';
 import { CreateUserPreferenceDto } from './dto/create-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
+import { UpdateUserExtraPreferenceDto } from './dto/update-user-extar-preference.dto';
 
 @Controller('mobile/user-preferences')
 @UseGuards(JwtAuthGuard)
@@ -28,6 +31,22 @@ export class UserPreferenceController {
     }
 
     return this.service.create(user_id, dto);
+  }
+
+  // ✅ Extra UPDATE
+  @Patch('/update-extra-preferences/:id')
+  updateExtra(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req,
+    @Body() dto: UpdateUserExtraPreferenceDto,
+  ) {
+    const user_id = req.user?.userId;
+
+    if (!user_id) {
+      throw new Error('User ID missing from JWT');
+    }
+
+    return this.service.updateExtraPreferences(id, user_id, dto);
   }
 
   // ✅ Get logged-in user preferences

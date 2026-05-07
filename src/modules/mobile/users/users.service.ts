@@ -1,6 +1,7 @@
 import {
   Injectable,
   BadRequestException,
+  NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,7 +17,7 @@ export class UsersService {
   ) {}
 
   // 🆕 CREATE USER (OTP FLOW)
-  async createUser(email: string) {
+  async createUser(email: string, screen_status: number) {
     try {
       email = email.toLowerCase().trim();
 
@@ -34,6 +35,7 @@ export class UsersService {
         role: Role.USER,
         isActive: true,
         isBlocked: false,
+        status: screen_status,
       });
 
       return await this.userRepo.save(user);
@@ -47,5 +49,24 @@ export class UsersService {
     return this.userRepo.findOne({
       where: { email: email.toLowerCase().trim() },
     });
+  }
+
+  // 🔍 FIND USER
+  findById(id: number) {
+    return this.userRepo.findOne({
+      where: { id: id },
+    });
+  }
+
+  async updateStatus(userId: number, status: number) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.status = status;
+
+    return this.userRepo.save(user);
   }
 }

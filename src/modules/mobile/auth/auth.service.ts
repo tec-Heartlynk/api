@@ -18,6 +18,9 @@ import { BlacklistService } from '../../blacklist/blacklist.service'; // 👈 AD
 import admin from '../../../config/firebase';
 import { request } from 'node:https';
 import { log } from 'node:console';
+import { preferences } from 'joi';
+import { find } from 'rxjs';
+import { UserPreferenceService } from '../user-preference/user-preference.service';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +33,7 @@ export class AuthService {
     @InjectRepository(Otp)
     private otpRepo: Repository<Otp>,
     private blacklistService: BlacklistService, // 👈 ADD
+    private userPreferenceService: UserPreferenceService, // 👈 ADD
   ) {}
 
   // 🔥 1. SEND OTP (DTO)
@@ -92,6 +96,8 @@ export class AuthService {
     try {
       const email = dto.email.toLowerCase().trim();
 
+      const screen_status = dto.screen_status;
+
       const otpRecord = await this.otpService.findLatestOtp(email);
 
       if (!otpRecord) {
@@ -140,10 +146,18 @@ export class AuthService {
       // 🔥 CHECK USER EXIST OR CREATE
       let user = await this.usersService.findByEmail(email);
 
+      let preferences_id: number | null = null;
+
+      if (user && user.status > 1) {
+        const preference = await this.userPreferenceService.findByUser(user.id);
+
+        preferences_id = preference?.id || null;
+      }
+
       let isNewUser = false;
 
       if (!user) {
-        user = await this.usersService.createUser(email);
+        user = await this.usersService.createUser(email, screen_status!);
         isNewUser = true;
       }
 
@@ -152,10 +166,12 @@ export class AuthService {
         id: user.id,
         email: user.email,
         role: user.role,
+        screen_status: user.status,
       });
 
       return {
         success: true,
+        preferences_id: preferences_id,
         message: isNewUser
           ? 'OTP verified & new user created'
           : 'OTP verified & user logged in',
@@ -164,8 +180,6 @@ export class AuthService {
         isNewUser, // 👈 useful for frontend
       };
     } catch (error) {
-      console.error('VERIFY OTP ERROR:', error);
-
       if (error instanceof BadRequestException) throw error;
 
       throw new InternalServerErrorException('OTP verification failed');
@@ -230,7 +244,7 @@ export class AuthService {
       const sanitizedToken = this.normalizeGoogleToken(accessToken);
 
       if (!sanitizedToken) {
-        return reject(new BadRequestException('Invalid Google access token')); 
+        return reject(new BadRequestException('Invalid Google access token'));
       }
 
       const options = {
@@ -251,25 +265,39 @@ export class AuthService {
 
         res.on('end', () => {
           if (res.statusCode !== 200) {
-            return reject(new BadRequestException('Invalid Google access token')); 
+            return reject(
+              new BadRequestException('Invalid Google access token'),
+            );
           }
 
           try {
             const parsed = JSON.parse(body);
 
             if (!parsed.email) {
-              return reject(new BadRequestException('Email not found in Google access token response'));
+              return reject(
+                new BadRequestException(
+                  'Email not found in Google access token response',
+                ),
+              );
             }
 
             resolve({ email: parsed.email });
           } catch (err) {
-            reject(new BadRequestException('Failed to parse Google user info response'));
+            reject(
+              new BadRequestException(
+                'Failed to parse Google user info response',
+              ),
+            );
           }
         });
       });
 
       req.on('error', () => {
-        reject(new InternalServerErrorException('Failed to verify Google access token'));
+        reject(
+          new InternalServerErrorException(
+            'Failed to verify Google access token',
+          ),
+        );
       });
 
       req.end();
@@ -279,11 +307,12 @@ export class AuthService {
   // 🔥 GOOGLE SIGN IN
   async verifyGoogle(dto: GoogleSignInDto) {
     try {
-      const rawToken =
-        dto.idToken ?? dto.accessToken ?? dto.token;
+      const rawToken = dto.idToken ?? dto.accessToken ?? dto.token;
 
       if (!rawToken) {
-        throw new BadRequestException('Google idToken, accessToken, or token is required');
+        throw new BadRequestException(
+          'Google idToken, accessToken, or token is required',
+        );
       }
 
       const token = this.normalizeGoogleToken(rawToken);
@@ -316,8 +345,16 @@ export class AuthService {
       let user = await this.usersService.findByEmail(email);
       let isNewUser = false;
 
+      let preferences_id: number | null = null;
+
+      if (user?.status == 2) {
+        const preference = await this.userPreferenceService.findByUser(user.id);
+
+        preferences_id = preference?.id || null;
+      }
+
       if (!user) {
-        user = await this.usersService.createUser(email);
+        user = await this.usersService.createUser(email, dto.screen_status!);
         isNewUser = true;
       }
 
@@ -329,13 +366,16 @@ export class AuthService {
 
       return {
         success: true,
+        preferences_id: preferences_id,
         message: isNewUser
           ? 'Google sign-in successful & new user created'
           : 'Google sign-in successful & user logged in',
         user,
         token: jwtToken,
         isNewUser,
-        authMethod: usedAccessToken ? 'google-access-token' : 'firebase-id-token',
+        authMethod: usedAccessToken
+          ? 'google-access-token'
+          : 'firebase-id-token',
       };
     } catch (error) {
       console.error('GOOGLE SIGN IN ERROR:', error);

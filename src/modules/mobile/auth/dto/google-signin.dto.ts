@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class GoogleSignInDto {
   @IsString()
@@ -12,4 +13,9 @@ export class GoogleSignInDto {
   @IsString()
   @IsOptional()
   token?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  screen_status?: number;
 }

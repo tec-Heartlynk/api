@@ -37,6 +37,9 @@ export class User {
   @Column({ default: false })
   isBlocked!: boolean;
 
+  @Column({ nullable: true })
+  status!: number;
+
   // 📅 TIMESTAMPS
   @CreateDateColumn()
   createdAt!: Date;

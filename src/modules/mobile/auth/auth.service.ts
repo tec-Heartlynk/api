@@ -347,7 +347,7 @@ export class AuthService {
 
       let preferences_id: number | null = null;
 
-      if (user?.status == 2) {
+      if (user && user.status > 1) {
         const preference = await this.userPreferenceService.findByUser(user.id);
 
         preferences_id = preference?.id || null;

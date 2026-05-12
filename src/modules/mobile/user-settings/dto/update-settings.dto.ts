@@ -48,4 +48,16 @@ export class UpdateSettingsDto {
   @Type(() => Number)
   @IsInt()
   screen_status?: number;
+
+  // ✅ IMPORTANT
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  verified_status?: number;
+
+  // ✅ IMPORTANT
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  match_status?: number;
 }

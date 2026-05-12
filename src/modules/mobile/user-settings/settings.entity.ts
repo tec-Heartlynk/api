@@ -52,4 +52,10 @@ export class UserSettings {
 
   @Column({ default: false })
   political_learning!: boolean;
+
+  @Column({ default: 0 })
+  verified_status!: number;
+
+  @Column({ default: 0 })
+  match_status!: number;
 }

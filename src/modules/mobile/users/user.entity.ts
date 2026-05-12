@@ -10,6 +10,7 @@ import {
 
 import { Profile } from '../profile/profile.entity';
 import { UserSettings } from '../user-settings/settings.entity';
+import { UserPreference } from '../user-preference/user-preference.entity';
 
 export enum Role {
   USER = 'USER',
@@ -54,4 +55,7 @@ export class User {
   //UserSettings relation
   @OneToOne(() => UserSettings, (settings) => settings.user)
   settings!: UserSettings;
+
+  @OneToMany(() => UserPreference, (userPreference) => userPreference.user)
+  userPreferences!: UserPreference[];
 }

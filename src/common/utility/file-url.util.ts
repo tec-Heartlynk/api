@@ -1,7 +1,7 @@
 export function mapFileUrls(data: any, baseUrl: string, uploadPath: string) {
   if (!data) return data;
 
-  const buildUrl = (file: string) => `${baseUrl}/${uploadPath}/${file}`;
+  const buildUrl = (file: string) => `${baseUrl}/${uploadPath}/profile/${file}`;
 
   // single object
   if (data.photos && Array.isArray(data.photos)) {

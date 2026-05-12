@@ -7,8 +7,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
+  ManyToMany,
+  JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { User } from '../users/user.entity';
+import { UserPreference } from '../user-preference/user-preference.entity';
 
 @Entity('profiles')
 export class Profile {
@@ -45,6 +49,9 @@ export class Profile {
   @ManyToOne(() => User, (user) => user.profile, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user!: User;
+
+  @Column()
+  userId!: number;
 
   @CreateDateColumn()
   createdAt!: Date;

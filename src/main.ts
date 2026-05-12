@@ -5,14 +5,19 @@ import { SwaggerModule } from '@nestjs/swagger/dist';
 import { ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'path/win32';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);  
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // Global error handler
   app.use((err, req, res, next) => {
-    console.error('🔴 GLOBAL ERROR:', err);
     if (!res.headersSent) {
-      res.status(500).json({ message: err.message, error: 'Internal Server Error', statusCode: 500 });
+      res.status(500).json({
+        message: err.message,
+        error: 'Internal Server Error',
+        statusCode: 500,
+      });
     }
   });
   app.useGlobalPipes(
@@ -35,6 +40,11 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.useGlobalInterceptors(new ResponseInterceptor(app.get(ConfigService)));
+
+  // ✅ STATIC FILES
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
 
   await app.listen(process.env.PORT || 3000);
 }

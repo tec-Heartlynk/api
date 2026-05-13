@@ -2,18 +2,23 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './modules/mobile/users/users.module';
-import { AuthModule } from './modules/mobile/auth/auth.module';
-import { EmployeeModule } from './modules/admin/employee/employee.module';
-//import { ProfilesModule } from './modules/profiles/profiles.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ProfileModule } from './modules/mobile/profile/profile.module';
-import { OptionModule } from './modules/mobile/questions_option/option/category-question-option.module';
-import { OptionCategoryModule } from './modules/mobile/questions_option/option_category/option_category.module';
+
+//Admin
+import { EmployeeModule } from './modules/admin/employee/employee.module';
 import { OptionCategoryModule as AdminOptionCategoryModule } from './modules/admin/questions_option/option_category/option_category.module';
 import { OptionModule as AdminOptionModule } from './modules/admin/questions_option/option/category-question-option.module';
 import { QuizModule as AdminQuizModule } from './modules/admin/quiz-question/quiz.module';
+import { SectionModule } from './modules/admin/section/section.module';
+import { DomainModule } from './modules/admin/domain/domain.module';
+
+//Mobile
+import { UsersModule } from './modules/mobile/users/users.module';
+import { AuthModule } from './modules/mobile/auth/auth.module';
+import { ProfileModule } from './modules/mobile/profile/profile.module';
+import { OptionModule } from './modules/mobile/questions_option/option/category-question-option.module';
+import { OptionCategoryModule } from './modules/mobile/questions_option/option_category/option_category.module';
 import { QuizModule } from './modules/mobile/quiz-question/quiz.module';
 import { SettingsModule } from './modules/mobile/user-settings/settings.module';
 import { UserPreferenceModule } from './modules/mobile/user-preference/user-preference.module';
@@ -64,6 +69,8 @@ import { DiscoverModule } from './modules/mobile/discover/discover.module';
     StarModule,
     CrossModule,
     DiscoverModule,
+    SectionModule,
+    DomainModule,
   ],
 })
 export class AppModule {}

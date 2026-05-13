@@ -22,6 +22,9 @@ export class QuizQuestion {
   @Column({ type: 'boolean', default: true, nullable: false })
   active!: boolean;
 
+  @Column({ type: 'int', nullable: true })
+  section_id?: number;
+
   @OneToMany(() => QuizOption, (opt) => opt.question, {
     cascade: true,
   })

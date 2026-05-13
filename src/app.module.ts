@@ -12,6 +12,7 @@ import { OptionModule as AdminOptionModule } from './modules/admin/questions_opt
 import { QuizModule as AdminQuizModule } from './modules/admin/quiz-question/quiz.module';
 import { SectionModule } from './modules/admin/section/section.module';
 import { DomainModule } from './modules/admin/domain/domain.module';
+import { TraitModule } from './modules/admin/trait/trait.module';
 
 //Mobile
 import { UsersModule } from './modules/mobile/users/users.module';
@@ -71,6 +72,7 @@ import { DiscoverModule } from './modules/mobile/discover/discover.module';
     DiscoverModule,
     SectionModule,
     DomainModule,
+    TraitModule,
   ],
 })
 export class AppModule {}

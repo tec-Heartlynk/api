@@ -29,6 +29,10 @@ export class CreateQuizDto {
   @IsBoolean()
   active?: boolean;
 
+  @IsNotEmpty()
+  @IsNumber()
+  section_id?: number;
+
   @ValidateNested({ each: true })
   @Type(() => CreateQuizOptionDto)
   @ArrayMinSize(1) // minimum 1 option required

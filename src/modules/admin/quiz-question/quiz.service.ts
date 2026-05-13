@@ -25,7 +25,6 @@ export class QuizService {
   // 🔹 CREATE
   async create(dto: CreateQuizDto) {
     try {
-      // manual validation (extra safety)
       if (!dto.question) {
         throw new BadRequestException('Question is required');
       }
@@ -35,32 +34,34 @@ export class QuizService {
       }
 
       const question = new QuizQuestion();
+
+      // IMPORTANT
       question.question = dto.question;
       question.category = dto.category;
+      question.section_id = dto.section_id;
       question.active = dto.active ?? true;
 
       question.options = dto.options.map((opt) => {
-        if (!opt.option_name) {
-          throw new BadRequestException('Option name is required');
-        }
         const option = new QuizOption();
+
         option.option_name = opt.option_name;
+
+        option.primary_trait_id = opt.primary_trait_id ?? 0;
+        option.primary_trait_value = opt.primary_trait_value ?? 0;
+
+        option.secondary_trait_id = opt.secondary_trait_id ?? 0;
+        option.secondary_trait_value = opt.secondary_trait_value ?? 0;
+
+        option.supporting_trait_id = opt.supporting_trait_id ?? 0;
+        option.supporting_trait_value = opt.supporting_trait_value ?? 0;
+
         return option;
       });
 
       return await this.questionRepo.save(question);
     } catch (error) {
-      if (
-        error instanceof BadRequestException ||
-        error instanceof NotFoundException
-      ) {
-        throw error;
-      }
-
-      console.error('CREATE ERROR:', error);
+      console.error(error);
       throw error;
-
-      //throw new InternalServerErrorException('Failed to create question');
     }
   }
 
@@ -132,43 +133,59 @@ export class QuizService {
   // 🔹 UPDATE
   async update(id: number, dto: CreateQuizDto) {
     try {
-      const question = await this.findOne(id);
+      const question = await this.questionRepo.findOne({
+        where: { id },
+        relations: ['options'],
+      });
 
-      if (!dto.question) {
-        throw new BadRequestException('Question is required');
-      }
-
-      if (!dto.options || dto.options.length === 0) {
-        throw new BadRequestException('At least one option is required');
+      if (!question) {
+        throw new NotFoundException('Question not found');
       }
 
       question.question = dto.question;
       question.category = dto.category;
+      question.section_id = dto.section_id ?? 0;
+
       if (dto.active !== undefined) {
         question.active = dto.active;
       }
 
-      // delete old options
-      await this.optionRepo.delete({ question: { id } });
+      const updatedOptions: QuizOption[] = [];
 
-      // add new options
-      question.options = dto.options.map((opt) => {
-        if (!opt.option_name) {
-          throw new BadRequestException('Option name is required');
+      for (const opt of dto.options) {
+        let option: QuizOption;
+
+        // existing option
+        if (opt.id) {
+          const existingOption = await this.optionRepo.findOne({
+            where: { id: opt.id },
+          });
+
+          option = existingOption || new QuizOption();
+        } else {
+          // new option
+          option = new QuizOption();
         }
-        const option = new QuizOption();
+
         option.option_name = opt.option_name;
-        return option;
-      });
+
+        option.primary_trait_id = opt.primary_trait_id ?? 0;
+        option.primary_trait_value = opt.primary_trait_value ?? 0;
+
+        option.secondary_trait_id = opt.secondary_trait_id ?? 0;
+        option.secondary_trait_value = opt.secondary_trait_value ?? 0;
+
+        option.supporting_trait_id = opt.supporting_trait_id ?? 0;
+        option.supporting_trait_value = opt.supporting_trait_value ?? 0;
+
+        updatedOptions.push(option);
+      }
+
+      question.options = updatedOptions;
 
       return await this.questionRepo.save(question);
     } catch (error) {
-      if (
-        error instanceof BadRequestException ||
-        error instanceof NotFoundException
-      ) {
-        throw error;
-      }
+      console.error(error);
 
       throw new InternalServerErrorException('Failed to update question');
     }

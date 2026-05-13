@@ -6,9 +6,10 @@ import { UserSettings } from './settings.entity';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';
 import { UsersModule } from '../users/users.module';
+import { CrossModule } from '../cross/cross.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserSettings]), UsersModule],
+  imports: [TypeOrmModule.forFeature([UserSettings]), UsersModule, CrossModule],
   controllers: [SettingsController],
   providers: [SettingsService],
 })

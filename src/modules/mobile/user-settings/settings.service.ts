@@ -6,6 +6,7 @@ import { UserSettings } from './settings.entity';
 import { Repository } from 'typeorm';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UsersService } from '../users/users.service';
+import { CrossService } from '../cross/cross.service';
 
 @Injectable()
 export class SettingsService {
@@ -13,6 +14,7 @@ export class SettingsService {
     @InjectRepository(UserSettings)
     private repo: Repository<UserSettings>,
     private userService: UsersService,
+    private crossService: CrossService,
   ) {}
 
   async getSettings(user_id: number, dto?: UpdateSettingsDto) {
@@ -39,6 +41,8 @@ export class SettingsService {
 
     Object.assign(settings, dto);
 
-    return this.repo.save(settings);
+    const updatedSettings = await this.repo.save(settings);
+    await this.crossService.deleteByUserId(user_id);
+    return updatedSettings;
   }
 }

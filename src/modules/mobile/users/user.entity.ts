@@ -11,6 +11,7 @@ import {
 import { Profile } from '../profile/profile.entity';
 import { UserSettings } from '../user-settings/settings.entity';
 import { UserPreference } from '../user-preference/user-preference.entity';
+import { UserPreferenceQuestionAnswer } from '../user-preference-question-answer/user-preference-question-answer.entity';
 
 export enum Role {
   USER = 'USER',
@@ -58,4 +59,10 @@ export class User {
 
   @OneToMany(() => UserPreference, (userPreference) => userPreference.user)
   userPreferences!: UserPreference[];
+
+  @OneToMany(() => UserPreferenceQuestionAnswer, (answer) => answer.user)
+  preferenceAnswers!: UserPreferenceQuestionAnswer[];
+
+  @OneToOne(() => UserPreference, (preference) => preference.user)
+  preferences!: UserPreference;
 }

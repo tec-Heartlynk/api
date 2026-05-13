@@ -43,9 +43,4 @@ export class UpdateProfileDto {
   @Type(() => Number)
   @IsLongitude()
   longitude?: number;
-
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(6, { message: 'Maximum 6 photos allowed' })
-  photos?: string[];
 }

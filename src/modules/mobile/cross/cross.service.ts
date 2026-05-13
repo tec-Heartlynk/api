@@ -72,4 +72,16 @@ export class CrossService {
       message: 'Cross action deleted successfully',
     };
   }
+
+  // BETTER DELETE CROSS (used when user updates profile, we can delete cross without knowing to_user_id)
+  async deleteByUserId(userId: number) {
+    await this.crossRepo.delete({
+      from_user_id: userId,
+    });
+
+    return {
+      success: true,
+      message: 'All cross actions deleted successfully',
+    };
+  }
 }

@@ -9,5 +9,6 @@ import { CrossService } from './cross.service';
   imports: [TypeOrmModule.forFeature([CrossAction])],
   controllers: [CrossController],
   providers: [CrossService],
+  exports: [CrossService],
 })
 export class CrossModule {}

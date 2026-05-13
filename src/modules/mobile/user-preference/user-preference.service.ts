@@ -6,6 +6,7 @@ import { CreateUserPreferenceDto } from './dto/create-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { UpdateUserExtraPreferenceDto } from './dto/update-user-extar-preference.dto';
 import { UsersService } from '../users/users.service';
+import { CrossService } from '../cross/cross.service';
 
 @Injectable()
 export class UserPreferenceService {
@@ -13,6 +14,7 @@ export class UserPreferenceService {
     @InjectRepository(UserPreference)
     private repo: Repository<UserPreference>,
     private userService: UsersService,
+    private crossService: CrossService,
   ) {}
 
   // ✅ CREATE or UPDATE (UPSERT)
@@ -63,6 +65,7 @@ export class UserPreferenceService {
     }
 
     await this.repo.update({ user_id }, dto);
+    await this.crossService.deleteByUserId(user_id);
 
     return this.findByUser(user_id);
   }
@@ -88,6 +91,7 @@ export class UserPreferenceService {
     if (dto.screen_status !== undefined) {
       await this.userService.updateStatus(user_id, dto.screen_status);
     }
+    await this.crossService.deleteByUserId(user_id);
 
     return saved;
   }

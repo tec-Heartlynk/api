@@ -39,6 +39,13 @@ export class ProfileController {
     return this.profileService.findByUserIdprofile(req.user.userId);
   }
 
+  // ✅ GET PROFILE
+  @Get('getprofile-status')
+  @UseGuards(JwtAuthGuard)
+  getMyProfileStatus(@Req() req) {
+    return this.profileService.findByUserIdprofileStatus(req.user.userId);
+  }
+
   // ✅ UPDATE PROFILE (without image)
   @Patch('update-profile')
   @UseGuards(JwtAuthGuard)

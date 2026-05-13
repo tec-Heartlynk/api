@@ -171,7 +171,7 @@ export class DiscoverService {
 
           full_name: profile.name,
 
-          bio: profile.self_describe,
+          bio: profile.self_describe ? profile.self_describe : '',
 
           identity: profile.identity,
 

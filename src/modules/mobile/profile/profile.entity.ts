@@ -46,7 +46,9 @@ export class Profile {
   @Column({ type: 'json', nullable: true })
   photos!: string[];
 
-  @ManyToOne(() => User, (user) => user.profile, { onDelete: 'CASCADE' })
+  @OneToOne(() => User, (user) => user.profile, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'userId' })
   user!: User;
 

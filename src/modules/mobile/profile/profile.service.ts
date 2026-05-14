@@ -14,6 +14,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
 import { QuizQuestion } from '../quiz-question/quiz-question.entity';
+import { UserPhotoService } from '../user-photo/user-photo.service';
 
 @Injectable()
 export class ProfileService {
@@ -23,6 +24,7 @@ export class ProfileService {
     private configService: ConfigService,
     private userService: UsersService,
     private crossService: CrossService,
+    private userPhotoService: UserPhotoService,
     @InjectRepository(CategoryQuestionOption)
     private readonly categoryquestionoptionRepo: Repository<CategoryQuestionOption>,
     @InjectRepository(QuizQuestion)
@@ -46,38 +48,49 @@ export class ProfileService {
         );
       }
 
-      // ✅ MIN 1 IMAGE REQUIRED
+      // ✅ minimum 1 image required
       if (!files || files.length === 0) {
         throw new BadRequestException('At least one profile image is required');
       }
 
-      // 🔥 max already handled by multer (6)
-
-      // ✅ validation
-      if (!files || files.length === 0) {
-        throw new BadRequestException('At least one profile image is required');
-      }
-
-      // ✅ ONLY filenames array (THIS IS CORRECT)
-      const photos: string[] = files.map((file) => file.filename);
-
+      // ✅ create profile first
       const profile = this.profileRepo.create({
         ...dto,
-        photos,
-        user: { id: userId },
+        user: { id: userId } as any,
       });
 
       const savedProfile = await this.profileRepo.save(profile);
 
+      // ✅ insert photos into user_photo table
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        await this.userPhotoService.create({
+          user_id: savedProfile.id,
+
+          photo: file.filename,
+
+          // first image primary
+          is_primary: i === 0,
+        });
+      }
+
+      // ✅ update screen status
       if (dto.screen_status !== undefined) {
         await this.userService.updateStatus(userId, dto.screen_status);
       }
 
-      return savedProfile;
+      return {
+        success: true,
+        message: 'Profile created successfully',
+        data: savedProfile,
+      };
     } catch (error) {
-      //console.error('CREATE PROFILE ERROR 👉', error);
+      console.log(error);
 
-      if (error instanceof BadRequestException) throw error;
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
 
       throw new InternalServerErrorException('Failed to create profile');
     }
@@ -91,6 +104,8 @@ export class ProfileService {
 
         .leftJoinAndSelect('profile.user', 'user')
 
+        .leftJoinAndSelect('profile.photos', 'photos')
+
         .leftJoinAndSelect('user.settings', 'settings')
 
         .leftJoinAndSelect('user.preferences', 'preferences')
@@ -103,7 +118,7 @@ export class ProfileService {
         // answer relation
         .leftJoinAndSelect('preferenceAnswers.answer', 'answer')
 
-        .where('profile.userId = :userId', { userId })
+        .where('profile.user_id = :userId', { userId })
 
         .getOne();
 
@@ -196,10 +211,10 @@ export class ProfileService {
           latitude: profile.latitude,
           longitude: profile.longitude,
 
-          photos: profile.photos?.map(
-            (photo) =>
-              `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${photo}`,
-          ),
+          photos: profile.photos?.map((item) => ({
+            id: item.id,
+            photo: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${item.photo}`,
+          })),
 
           user: {
             id: profile.user.id,
@@ -297,6 +312,8 @@ export class ProfileService {
 
         .leftJoinAndSelect('profile.user', 'user')
 
+        .leftJoinAndSelect('profile.photos', 'photos')
+
         .leftJoinAndSelect('user.settings', 'settings')
 
         .leftJoinAndSelect('user.preferences', 'preferences')
@@ -307,7 +324,7 @@ export class ProfileService {
 
         .leftJoinAndSelect('preferenceAnswers.answer', 'answer')
 
-        .where('profile.userId = :userId', { userId })
+        .where('profile.user_id = :userId', { userId })
 
         .getOne();
 
@@ -489,54 +506,4 @@ export class ProfileService {
   }
 
   //Update profile
-
-  async update(
-    userId: number,
-    dto: UpdateProfileDto,
-    files?: Express.Multer.File[],
-  ) {
-    try {
-      const profile = await this.profileRepo.findOne({
-        where: { user: { id: userId } },
-      });
-
-      if (!profile) {
-        throw new NotFoundException('Profile not found');
-      }
-
-      // ❌ Empty update check
-      const hasDtoData = Object.keys(dto).length > 0;
-      const hasFiles = files && files.length > 0;
-
-      if (!hasDtoData && !hasFiles) {
-        throw new BadRequestException('No data provided for update');
-      }
-
-      // ❌ prevent overriding photos from DTO
-      const { photos, ...safeDto } = dto as any;
-
-      // 🔥 REPLACE MODE (old images removed, new only saved)
-      if (hasFiles) {
-        profile.photos = files.map((file) => file.filename);
-      }
-
-      // update other fields
-      Object.assign(profile, safeDto);
-
-      const updatedProfile = await this.profileRepo.save(profile);
-      await this.crossService.deleteByUserId(userId);
-      return updatedProfile;
-    } catch (error) {
-      //console.error('UPDATE PROFILE ERROR 👉', error);
-
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException('Failed to update profile');
-    }
-  }
 }

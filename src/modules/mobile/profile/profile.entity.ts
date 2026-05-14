@@ -2,17 +2,16 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
-  ManyToMany,
-  JoinTable,
   OneToMany,
 } from 'typeorm';
+
 import { User } from '../users/user.entity';
-import { UserPreference } from '../user-preference/user-preference.entity';
+import { UserPhoto } from '../user-photo/user-photo.entity';
+import { IsNegative } from 'class-validator';
 
 @Entity('profiles')
 export class Profile {
@@ -37,23 +36,36 @@ export class Profile {
   @Column()
   location!: string;
 
-  @Column('decimal', { precision: 10, scale: 7, nullable: true })
+  @Column('decimal', {
+    precision: 10,
+    scale: 7,
+    nullable: true,
+  })
   latitude!: number;
 
-  @Column('decimal', { precision: 10, scale: 7, nullable: true })
+  @Column('decimal', {
+    precision: 10,
+    scale: 7,
+    nullable: true,
+  })
   longitude!: number;
 
-  @Column({ type: 'json', nullable: true })
-  photos!: string[];
+  // ✅ photos relation
 
+  @OneToMany(() => UserPhoto, (photo) => photo.profile)
+  photos!: UserPhoto[];
+
+  // ✅ user relation
   @OneToOne(() => User, (user) => user.profile, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user!: User;
 
-  @Column()
-  userId!: number;
+  // ✅ foreign key column
+
+  @Column({ nullable: false })
+  user_id!: number;
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -8,6 +8,7 @@ import {
   Patch,
   UploadedFiles,
   UseInterceptors,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -17,12 +18,12 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../../config/multer.config';
 
 @Controller('mobile/profile')
+@UseGuards(JwtAuthGuard)
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   // ✅ CREATE PROFILE WITH IMAGE UPLOAD
   @Post('create')
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FilesInterceptor('photos', 6, multerConfig))
   createProfile(
     @Req() req,
@@ -34,27 +35,20 @@ export class ProfileController {
 
   // ✅ GET PROFILE
   @Get('getprofile')
-  @UseGuards(JwtAuthGuard)
   getMyProfile(@Req() req) {
     return this.profileService.findByUserIdprofile(req.user.userId);
   }
 
   // ✅ GET PROFILE
   @Get('getprofile-status')
-  @UseGuards(JwtAuthGuard)
   getMyProfileStatus(@Req() req) {
     return this.profileService.findByUserIdprofileStatus(req.user.userId);
   }
 
   // ✅ UPDATE PROFILE (without image)
-  @Patch('update-profile')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FilesInterceptor('photos', 6, multerConfig))
-  updateProfile(
-    @Req() req,
-    @Body() dto: UpdateProfileDto,
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
-    return this.profileService.update(req.user.userId, dto, files);
-  }
+  // @Patch('update-profile')
+  // @UseInterceptors(FilesInterceptor('photos', 6, multerConfig))
+  // updateProfile(@Req() req, @Body() dto: UpdateProfileDto) {
+  //   return this.profileService.update(req.user.userId, dto);
+  // }
 }

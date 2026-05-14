@@ -11,6 +11,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { UserPhoto } from '../../user-photo/user-photo.entity';
 
 export class CreateProfileDto {
   @IsOptional()
@@ -48,7 +49,7 @@ export class CreateProfileDto {
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(6, { message: 'Maximum 6 photos allowed' })
-  photos?: string[];
+  photos!: UserPhoto[];
 
   @IsOptional()
   @Type(() => Number)

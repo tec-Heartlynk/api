@@ -28,6 +28,7 @@ import { HeartModule } from './modules/mobile/heart/heart.module';
 import { StarModule } from './modules/mobile/star/star.module';
 import { CrossModule } from './modules/mobile/cross/cross.module';
 import { DiscoverModule } from './modules/mobile/discover/discover.module';
+import { UserPhotoModule } from './modules/mobile/user-photo/user-photo.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { DiscoverModule } from './modules/mobile/discover/discover.module';
     SectionModule,
     DomainModule,
     TraitModule,
+    UserPhotoModule,
   ],
 })
 export class AppModule {}

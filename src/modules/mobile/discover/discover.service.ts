@@ -64,6 +64,7 @@ export class DiscoverService {
     const query = this.profileRepo
       .createQueryBuilder('profile')
       .leftJoinAndSelect('profile.user', 'user')
+      .leftJoinAndSelect('profile.photos', 'photos')
       .leftJoinAndSelect('user.userPreferences', 'userPreferences')
       .leftJoinAndMapOne(
         'user.settings',
@@ -191,11 +192,11 @@ export class DiscoverService {
 
           // ✅ Photos
 
-          photos:
-            profile.photos?.map(
-              (photo) =>
-                `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${photo}`,
-            ) || [],
+          photos: profile.photos?.map((item) => ({
+            id: item.id,
+            photo: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${item.photo}`,
+            is_primary: item.is_primary,
+          })),
 
           // ✅ Interests
           interests: interests.map((item) => ({

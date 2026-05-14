@@ -7,11 +7,13 @@ import { UsersModule } from '../users/users.module';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
 import { QuizQuestion } from '../quiz-question/quiz-question.entity';
 import { CrossModule } from '../cross/cross.module'; // ✅ FIX
+import { UserPhotoModule } from '../user-photo/user-photo.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Profile, CategoryQuestionOption, QuizQuestion]),
     UsersModule,
+    UserPhotoModule,
     CrossModule, // ✅ FIXED
   ],
 

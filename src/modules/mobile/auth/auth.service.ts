@@ -22,6 +22,8 @@ import { preferences } from 'joi';
 import { find } from 'rxjs';
 import { UserPreferenceService } from '../user-preference/user-preference.service';
 
+import { Inject, forwardRef } from '@nestjs/common';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -33,7 +35,10 @@ export class AuthService {
     @InjectRepository(Otp)
     private otpRepo: Repository<Otp>,
     private blacklistService: BlacklistService, // 👈 ADD
-    private userPreferenceService: UserPreferenceService, // 👈 ADD
+
+    // 🔥 HERE IS THE FIX
+    @Inject(forwardRef(() => UserPreferenceService))
+    private userPreferenceService: UserPreferenceService,
   ) {}
 
   // 🔥 1. SEND OTP (DTO)

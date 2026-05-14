@@ -21,6 +21,6 @@ export class QuizOption {
   @ManyToOne(() => QuizQuestion, (q) => q.options, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'quiz_questions_id' }) // 🔥 correct
+  @JoinColumn({ name: 'quiz_questions_id' })
   question!: QuizQuestion;
 }

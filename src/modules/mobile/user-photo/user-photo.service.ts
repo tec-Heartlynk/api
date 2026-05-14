@@ -33,33 +33,65 @@ export class UserPhotoService {
   // =========================
 
   async create(dto: CreateUserPhotoDto): Promise<UserPhoto> {
-    // max 6 photos validation
+    // =========================
+    // COUNT EXISTING PHOTOS
+    // =========================
+
     const totalPhotos = await this.photoRepo.count({
       where: {
         user_id: dto.user_id,
       },
     });
 
+    // =========================
+    // MAX 6 VALIDATION
+    // =========================
+
     if (totalPhotos >= 6) {
       throw new BadRequestException('Maximum 6 photos allowed');
     }
 
-    // reset old primary
+    // =========================
+    // RESET OLD PRIMARY
+    // =========================
+
     if (dto.is_primary) {
       await this.photoRepo.update(
-        { user_id: dto.user_id },
-        { is_primary: false },
+        {
+          user_id: dto.user_id,
+        },
+        {
+          is_primary: false,
+        },
       );
     }
 
-    const photo = this.photoRepo.create(dto);
+    // =========================
+    // CREATE PHOTO
+    // =========================
 
-    // ✅ update screen status
-    if (dto.screen_status !== undefined) {
+    const photo = this.photoRepo.create({
+      user_id: dto.user_id,
+
+      photo: dto.photo,
+
+      is_primary: totalPhotos === 0 ? true : dto.is_primary || false,
+    });
+
+    const savedPhoto = await this.photoRepo.save(photo);
+
+    // =========================
+    // UPDATE SCREEN STATUS
+    // ONLY FIRST PHOTO
+    // =========================
+
+    if (totalPhotos === 0 && dto.screen_status !== undefined) {
+      console.log('Updating screen status for user:', dto.user_id);
+
       await this.userService.updateStatus(dto.user_id, dto.screen_status);
     }
 
-    return await this.photoRepo.save(photo);
+    return savedPhoto;
   }
 
   // =========================

@@ -5,14 +5,22 @@ import { UserPreference } from './user-preference.entity';
 import { CreateUserPreferenceDto } from './dto/create-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { UpdateUserExtraPreferenceDto } from './dto/update-user-extar-preference.dto';
+import { UpdateUserAboutPreferenceDto } from './dto/update-user-profile-preference.dto';
 import { UsersService } from '../users/users.service';
 import { CrossService } from '../cross/cross.service';
+import { InternalServerErrorException } from '@nestjs/common';
+
+import { Profile } from '../profile/profile.entity';
 
 @Injectable()
 export class UserPreferenceService {
   constructor(
     @InjectRepository(UserPreference)
     private repo: Repository<UserPreference>,
+
+    @InjectRepository(Profile)
+    private profileRepo: Repository<Profile>,
+
     private userService: UsersService,
     private crossService: CrossService,
   ) {}
@@ -107,5 +115,74 @@ export class UserPreferenceService {
     await this.repo.delete({ user_id });
 
     return { message: 'Deleted successfully' };
+  }
+
+  // ✅ update current user preference and profile
+
+  async updateAbout(userId: number, dto: UpdateUserAboutPreferenceDto) {
+    try {
+      // =========================
+      // GET EXISTING DATA FIRST
+      // =========================
+
+      const profile = await this.profileRepo.findOne({
+        where: { user_id: userId },
+      });
+
+      const preference = await this.repo.findOne({
+        where: { user_id: userId },
+      });
+
+      if (!profile || !preference) {
+        throw new NotFoundException('User data not found');
+      }
+
+      // =========================
+      // PROFILE MERGE (SAFE)
+      // =========================
+
+      const updatedProfile = {
+        ...profile,
+        name: dto.name ?? profile.name,
+        dob: dto.dob ?? profile.dob,
+        identity: dto.identity ?? profile.identity,
+        self_describe: dto.self_describe ?? profile.self_describe,
+        who_open_meeting: dto.who_open_meeting ?? profile.who_open_meeting,
+      };
+
+      await this.profileRepo.save(updatedProfile);
+
+      // =========================
+      // PREFERENCES MERGE (SAFE)
+      // =========================
+
+      const updatedPreference = {
+        ...preference,
+        height: dto.height ?? preference.height,
+        occupation: dto.occupation ?? preference.occupation,
+        religion: dto.religion ?? preference.religion,
+        ethnicity: dto.ethnicity ?? preference.ethnicity,
+        education: dto.education ?? preference.education,
+        language: dto.language ?? preference.language,
+        political_learning:
+          dto.political_learning ?? preference.political_learning,
+        open_to_children: dto.open_to_children ?? preference.open_to_children,
+        pets: dto.pets ?? preference.pets,
+        drinking: dto.drinking ?? preference.drinking,
+        smoking: dto.smoking ?? preference.smoking,
+        diet: dto.diet ?? preference.diet,
+      };
+
+      await this.repo.save(updatedPreference);
+
+      return {
+        success: true,
+        message: 'Profile + Preferences updated safely',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : 'Something went wrong',
+      );
+    }
   }
 }

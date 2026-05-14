@@ -82,12 +82,19 @@ export class UserPhotoController {
       },
 
       limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB
+        fileSize: 5 * 1024 * 1024,
         files: 6,
       },
     }),
   )
-  async create(@Req() req, @UploadedFiles() files: Express.Multer.File[]) {
+  async create(
+    @Req() req,
+
+    @Body() body,
+
+    @UploadedFiles()
+    files: Express.Multer.File[],
+  ) {
     // =========================
     // VALIDATION
     // =========================
@@ -117,6 +124,12 @@ export class UserPhotoController {
     }
 
     // =========================
+    // DEBUG
+    // =========================
+
+    console.log(body);
+
+    // =========================
     // SAVE NEW PHOTOS
     // =========================
 
@@ -130,7 +143,9 @@ export class UserPhotoController {
 
         photo: file.filename,
 
-        // first ever image primary
+        screen_status: Number(body.screen_status),
+
+        // first image primary
         is_primary: existingPhotos.length === 0 && i === 0,
       });
 

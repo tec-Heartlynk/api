@@ -55,6 +55,21 @@ export class UserPreference {
   @Column({ nullable: true })
   political_learning!: number;
 
+  @Column({ type: 'int', nullable: true })
+  open_to_children!: number;
+
+  @Column({ type: 'int', nullable: true })
+  pets!: number;
+
+  @Column({ type: 'int', nullable: true })
+  drinking!: number;
+
+  @Column({ type: 'int', nullable: true })
+  smoking!: number;
+
+  @Column({ type: 'int', nullable: true })
+  diet!: number;
+
   // ✅ PROFILE RELATION
 
   // ✅ USER RELATION

@@ -24,6 +24,7 @@ import { QuizModule } from './modules/mobile/quiz-question/quiz.module';
 import { SettingsModule } from './modules/mobile/user-settings/settings.module';
 import { UserPreferenceModule } from './modules/mobile/user-preference/user-preference.module';
 import { UserPreferenceQuestionAnswerModule } from './modules/mobile/user-preference-question-answer/user-preference-question-answer.module';
+import { UserTraitLedgerModule } from './modules/mobile/user_trait_ledger/user-trait-ledger.module';
 import { HeartModule } from './modules/mobile/heart/heart.module';
 import { StarModule } from './modules/mobile/star/star.module';
 import { CrossModule } from './modules/mobile/cross/cross.module';
@@ -67,6 +68,7 @@ import { UserPhotoModule } from './modules/mobile/user-photo/user-photo.module';
     SettingsModule,
     UserPreferenceModule,
     UserPreferenceQuestionAnswerModule,
+    UserTraitLedgerModule,
     HeartModule,
     StarModule,
     CrossModule,

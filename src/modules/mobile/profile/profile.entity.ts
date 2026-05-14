@@ -60,12 +60,12 @@ export class Profile {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user?: User;
 
   // ✅ foreign key column
 
-  @Column({ nullable: false })
-  user_id!: number;
+  @Column({ nullable: true })
+  user_id?: number;
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -7,8 +7,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 
-import { QuizQuestion } from './quiz-question.entity';
-import { QuizOption } from './quiz-option.entity';
+import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
+import { QuizOption } from '../../admin/quiz-question/quiz-option.entity';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { QuizCategory } from './quiz-category.enum';
@@ -47,6 +47,7 @@ export class QuizService {
         }
 
         const option = new QuizOption();
+        option.question = question;
         option.option_name = opt.option_name;
 
         return option;
@@ -157,6 +158,7 @@ export class QuizService {
           }
 
           const option = new QuizOption();
+          option.question = question;
           option.option_name = opt.option_name;
           return option;
         });

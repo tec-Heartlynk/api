@@ -5,7 +5,7 @@ import { ProfileService } from './profile.service';
 import { ProfileController } from './profile.controller';
 import { UsersModule } from '../users/users.module';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
-import { QuizQuestion } from '../quiz-question/quiz-question.entity';
+import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 import { CrossModule } from '../cross/cross.module'; // ✅ FIX
 import { UserPhotoModule } from '../user-photo/user-photo.module';
 

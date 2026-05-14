@@ -8,9 +8,9 @@ import { Repository } from 'typeorm';
 
 import { UserPreferenceQuestionAnswer } from './user-preference-question-answer.entity';
 import { BulkUserPreferenceQuestionAnswerDto } from './dto/bulk-user-preference.dto';
-import { QuizCategory } from '../quiz-question/quiz-category.enum';
+import { QuizCategory } from '../../admin/quiz-question/quiz-category.enum';
 import { UsersService } from '../users/users.service';
-import { QuizQuestion } from '../quiz-question/quiz-question.entity';
+import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 
 @Injectable()
 export class UserPreferenceQuestionAnswerService {

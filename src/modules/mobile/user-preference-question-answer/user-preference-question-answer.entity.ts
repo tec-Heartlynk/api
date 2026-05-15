@@ -9,8 +9,8 @@ import {
 } from 'typeorm';
 
 import { User } from '../users/user.entity';
-import { QuizQuestion } from '../quiz-question/quiz-question.entity';
-import { QuizOption } from '../quiz-question/quiz-option.entity';
+import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
+import { QuizOption } from '../../admin/quiz-question/quiz-option.entity';
 
 @Entity('user_preferences_question_answer')
 @Index(['user_id', 'q_id', 'cat_slug'], { unique: true })

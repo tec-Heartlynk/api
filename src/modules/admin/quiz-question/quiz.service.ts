@@ -45,6 +45,7 @@ export class QuizService {
         const option = new QuizOption();
 
         option.option_name = opt.option_name;
+        option.question = question;
 
         option.primary_trait_id = opt.primary_trait_id ?? 0;
         option.primary_trait_value = opt.primary_trait_value ?? 0;
@@ -144,7 +145,10 @@ export class QuizService {
 
       question.question = dto.question;
       question.category = dto.category;
-      question.section_id = dto.section_id ?? 0;
+
+      if (dto.section_id !== undefined) {
+        question.section_id = dto.section_id;
+      }
 
       if (dto.active !== undefined) {
         question.active = dto.active;
@@ -167,6 +171,7 @@ export class QuizService {
           option = new QuizOption();
         }
 
+        //option.question = question;
         option.option_name = opt.option_name;
 
         option.primary_trait_id = opt.primary_trait_id ?? 0;
@@ -183,7 +188,9 @@ export class QuizService {
 
       question.options = updatedOptions;
 
-      return await this.questionRepo.save(question);
+      const res = await this.questionRepo.save(question);
+      console.log('Updated question:', res);
+      return res;//{"status": "success", "message": "Question updated successfully"};
     } catch (error) {
       console.error(error);
 

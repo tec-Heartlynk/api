@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+
+import { UserTraitLedger } from '../../mobile/user_trait_ledger/user_trait_ledger.entity';
 
 @Entity('traits')
 export class Trait {
@@ -19,4 +22,10 @@ export class Trait {
 
   @Column()
   domain_id!: number;
+
+  @OneToMany(
+  () => UserTraitLedger,
+  (userTraitLedger) => userTraitLedger.trait,
+)
+userTraitLedgers!: UserTraitLedger[];
 }

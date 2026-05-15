@@ -15,28 +15,45 @@ export function mapFileUrls(data: any, baseUrl: string, uploadPath: string) {
 
   return data;
 }
-
-export function hasFileField(data: any): boolean {
-  if (!data) return false;
-
-  if (Array.isArray(data)) {
-    return data.some((item) => hasFileField(item));
+export function hasFileField(
+  value: any,
+  visited: WeakSet<object> = new WeakSet(),
+): boolean {
+  // primitive/null
+  if (value === null || value === undefined) {
+    return false;
   }
 
-  if (typeof data === 'object') {
-    for (const key in data) {
-      if (
-        key === 'photos' ||
-        key === 'image' ||
-        key === 'avatar' ||
-        key === 'file'
-      ) {
-        return true;
-      }
+  // non-object
+  if (typeof value !== 'object') {
+    return false;
+  }
 
-      if (typeof data[key] === 'object') {
-        if (hasFileField(data[key])) return true;
-      }
+  // circular protection
+  if (visited.has(value)) {
+    return false;
+  }
+
+  visited.add(value);
+
+  // array
+  if (Array.isArray(value)) {
+    return value.some((item) => hasFileField(item, visited));
+  }
+
+  // object
+  for (const key of Object.keys(value)) {
+    const lowerKey = key.toLowerCase();
+
+    if (
+      lowerKey.includes('file') ||
+      lowerKey.includes('image')
+    ) {
+      return true;
+    }
+
+    if (hasFileField(value[key], visited)) {
+      return true;
     }
   }
 

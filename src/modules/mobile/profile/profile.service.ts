@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
-import { QuizQuestion } from '../quiz-question/quiz-question.entity';
+import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 import { UserPhotoService } from '../user-photo/user-photo.service';
 
 @Injectable()
@@ -126,6 +126,11 @@ export class ProfileService {
         throw new NotFoundException('Profile not found');
       }
 
+      const user = profile.user;
+      if (!user) {
+        throw new InternalServerErrorException('Profile user relation is missing');
+      }
+
       // get all option titles
       const options = await this.categoryquestionoptionRepo.find();
 
@@ -148,20 +153,20 @@ export class ProfileService {
         profile.photos?.length ? profile.photos : null,
 
         // preferences
-        profile.user.preferences?.looking_for,
-        profile.user.preferences?.feel,
-        profile.user.preferences?.interests?.length
-          ? profile.user.preferences.interests
+        user.preferences?.looking_for,
+        user.preferences?.feel,
+        user.preferences?.interests?.length
+          ? user.preferences.interests
           : null,
-        profile.user.preferences?.height,
-        profile.user.preferences?.occupation,
-        profile.user.preferences?.religion,
-        profile.user.preferences?.ethnicity,
-        profile.user.preferences?.education,
-        profile.user.preferences?.language?.length
-          ? profile.user.preferences.language
+        user.preferences?.height,
+        user.preferences?.occupation,
+        user.preferences?.religion,
+        user.preferences?.ethnicity,
+        user.preferences?.education,
+        user.preferences?.language?.length
+          ? user.preferences.language
           : null,
-        profile.user.preferences?.political_learning,
+        user.preferences?.political_learning,
       ];
 
       const filledFields = profileFields.filter(
@@ -217,68 +222,68 @@ export class ProfileService {
           })),
 
           user: {
-            id: profile.user.id,
-            email: profile.user.email,
-            role: profile.user.role,
-            isActive: profile.user.isActive,
-            isBlocked: profile.user.isBlocked,
-            status: profile.user.status,
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            isActive: user.isActive,
+            isBlocked: user.isBlocked,
+            status: user.status,
 
-            settings: profile.user.settings,
+            settings: user.settings,
 
-            preferences: profile.user.preferences
+            preferences: user.preferences
               ? {
-                  ...profile.user.preferences,
+                  ...user.preferences,
 
                   looking_for: {
-                    id: profile.user.preferences.looking_for,
-                    title: optionMap[profile.user.preferences.looking_for],
+                    id: user.preferences.looking_for,
+                    title: optionMap[user.preferences.looking_for],
                   },
 
                   height: {
-                    id: profile.user.preferences.height,
-                    title: optionMap[profile.user.preferences.height],
+                    id: user.preferences.height,
+                    title: optionMap[user.preferences.height],
                   },
 
                   occupation: {
-                    id: profile.user.preferences.occupation,
-                    title: optionMap[profile.user.preferences.occupation],
+                    id: user.preferences.occupation,
+                    title: optionMap[user.preferences.occupation],
                   },
 
                   religion: {
-                    id: profile.user.preferences.religion,
-                    title: optionMap[profile.user.preferences.religion],
+                    id: user.preferences.religion,
+                    title: optionMap[user.preferences.religion],
                   },
 
                   ethnicity: {
-                    id: profile.user.preferences.ethnicity,
-                    title: optionMap[profile.user.preferences.ethnicity],
+                    id: user.preferences.ethnicity,
+                    title: optionMap[user.preferences.ethnicity],
                   },
 
                   education: {
-                    id: profile.user.preferences.education,
-                    title: optionMap[profile.user.preferences.education],
+                    id: user.preferences.education,
+                    title: optionMap[user.preferences.education],
                   },
 
                   political_learning: {
-                    id: profile.user.preferences.political_learning,
+                    id: user.preferences.political_learning,
                     title:
-                      optionMap[profile.user.preferences.political_learning],
+                      optionMap[user.preferences.political_learning],
                   },
 
-                  interests: profile.user.preferences.interests?.map((id) => ({
+                  interests: user.preferences.interests?.map((id) => ({
                     id,
                     title: optionMap[id],
                   })),
 
-                  language: profile.user.preferences.language?.map((id) => ({
+                  language: user.preferences.language?.map((id) => ({
                     id,
                     title: optionMap[id],
                   })),
                 }
               : null,
 
-            preferenceAnswers: profile.user.preferenceAnswers?.map((item) => ({
+            preferenceAnswers: user.preferenceAnswers?.map((item) => ({
               id: item.id,
               q_id: item.q_id,
               ans_id: item.ans_id,
@@ -332,6 +337,11 @@ export class ProfileService {
         throw new NotFoundException('Profile not found');
       }
 
+      const user = profile.user;
+      if (!user) {
+        throw new InternalServerErrorException('Profile user relation is missing');
+      }
+
       // option mapping
       const options = await this.categoryquestionoptionRepo.find();
 
@@ -358,20 +368,20 @@ export class ProfileService {
         profile.photos?.length ? profile.photos : null,
 
         // preferences
-        profile.user.preferences?.looking_for,
-        profile.user.preferences?.feel,
-        profile.user.preferences?.interests?.length
-          ? profile.user.preferences.interests
+        user.preferences?.looking_for,
+        user.preferences?.feel,
+        user.preferences?.interests?.length
+          ? user.preferences.interests
           : null,
-        profile.user.preferences?.height,
-        profile.user.preferences?.occupation,
-        profile.user.preferences?.religion,
-        profile.user.preferences?.ethnicity,
-        profile.user.preferences?.education,
-        profile.user.preferences?.language?.length
-          ? profile.user.preferences.language
+        user.preferences?.height,
+        user.preferences?.occupation,
+        user.preferences?.religion,
+        user.preferences?.ethnicity,
+        user.preferences?.education,
+        user.preferences?.language?.length
+          ? user.preferences.language
           : null,
-        profile.user.preferences?.political_learning,
+        user.preferences?.political_learning,
       ];
 
       const filledFields = profileFields.filter(
@@ -394,18 +404,18 @@ export class ProfileService {
         profile.self_describe,
         profile.who_open_meeting,
         profile.location,
-        profile.user.preferences?.interests?.length
-          ? profile.user.preferences.interests
+        user.preferences?.interests?.length
+          ? user.preferences.interests
           : null,
-        profile.user.preferences?.height,
-        profile.user.preferences?.occupation,
-        profile.user.preferences?.religion,
-        profile.user.preferences?.ethnicity,
-        profile.user.preferences?.education,
-        profile.user.preferences?.language?.length
-          ? profile.user.preferences.language
+        user.preferences?.height,
+        user.preferences?.occupation,
+        user.preferences?.religion,
+        user.preferences?.ethnicity,
+        user.preferences?.education,
+        user.preferences?.language?.length
+          ? user.preferences.language
           : null,
-        profile.user.preferences?.political_learning,
+        user.preferences?.political_learning,
       ];
 
       const aboutYouStatus = aboutYouFields.every(
@@ -416,8 +426,8 @@ export class ProfileService {
 
       // 3. Relationship Goals
       const relationshipGoalsFields = [
-        profile.user.preferences?.looking_for,
-        profile.user.preferences?.feel,
+        user.preferences?.looking_for,
+        user.preferences?.feel,
       ];
 
       const relationshipGoalsStatus = relationshipGoalsFields.every(
@@ -429,8 +439,8 @@ export class ProfileService {
 
       // 4. Interests & Lifestyle
       const interestLifestyleFields = [
-        profile.user.preferences?.interests?.length
-          ? profile.user.preferences.interests
+        user.preferences?.interests?.length
+          ? user.preferences.interests
           : null,
       ];
 
@@ -451,7 +461,7 @@ export class ProfileService {
       const totalQuestions = await this.quizQuestionRepo.count();
 
       // user answered count
-      const totalAnswered = profile.user.preferenceAnswers?.length || 0;
+      const totalAnswered = user.preferenceAnswers?.length || 0;
 
       const compatibilityAnswersStatus =
         totalQuestions > 0 && totalAnswered === totalQuestions

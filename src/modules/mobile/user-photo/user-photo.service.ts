@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +16,7 @@ import { CreateUserPhotoDto } from './dto/create-user-photo.dto';
 import { UpdateUserPhotoDto } from './dto/update-user-photo.dto';
 
 import { UsersService } from '../users/users.service';
+import { Profile } from '../profile/profile.entity';
 
 import * as fs from 'fs';
 
@@ -25,6 +27,8 @@ export class UserPhotoService {
   constructor(
     @InjectRepository(UserPhoto)
     private photoRepo: Repository<UserPhoto>,
+    @InjectRepository(Profile)
+    private profileRepo: Repository<Profile>,
     private userService: UsersService,
   ) {}
 
@@ -32,14 +36,35 @@ export class UserPhotoService {
   // CREATE PHOTO
   // =========================
 
+  private async resolveProfile(userOrProfileId: number): Promise<Profile> {
+    const profile = await this.profileRepo.findOne({
+      where: [{ id: userOrProfileId }, { user_id: userOrProfileId }],
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found for user');
+    }
+
+    if (!profile.user_id) {
+      throw new InternalServerErrorException(
+        'Profile user_id is missing for related profile',
+      );
+    }
+
+    return profile;
+  }
+
   async create(dto: CreateUserPhotoDto): Promise<UserPhoto> {
+    const profile = await this.resolveProfile(dto.user_id);
+    const profileId = profile.id;
+
     // =========================
     // COUNT EXISTING PHOTOS
     // =========================
 
     const totalPhotos = await this.photoRepo.count({
       where: {
-        user_id: dto.user_id,
+        user_id: profileId,
       },
     });
 
@@ -58,7 +83,7 @@ export class UserPhotoService {
     if (dto.is_primary) {
       await this.photoRepo.update(
         {
-          user_id: dto.user_id,
+          user_id: profileId,
         },
         {
           is_primary: false,
@@ -71,7 +96,7 @@ export class UserPhotoService {
     // =========================
 
     const photo = this.photoRepo.create({
-      user_id: dto.user_id,
+      user_id: profileId,
 
       photo: dto.photo,
 
@@ -86,9 +111,17 @@ export class UserPhotoService {
     // =========================
 
     if (totalPhotos === 0 && dto.screen_status !== undefined) {
-      console.log('Updating screen status for user:', dto.user_id);
+      const userId = profile.user_id;
 
-      await this.userService.updateStatus(dto.user_id, dto.screen_status);
+      if (userId === undefined) {
+        throw new InternalServerErrorException(
+          'Profile user_id is missing when updating screen status',
+        );
+      }
+
+      console.log('Updating screen status for user:', userId);
+
+      await this.userService.updateStatus(userId, dto.screen_status);
     }
 
     return savedPhoto;
@@ -99,8 +132,11 @@ export class UserPhotoService {
   // =========================
 
   async findAll(user_id: number): Promise<UserPhoto[]> {
+    const profile = await this.resolveProfile(user_id);
+    const profileId = profile.id;
+
     return await this.photoRepo.find({
-      where: { user_id },
+      where: { user_id: profileId },
 
       order: {
         is_primary: 'DESC',
@@ -119,10 +155,13 @@ export class UserPhotoService {
     file: Express.Multer.File,
     dto: UpdateUserPhotoDto,
   ) {
+    const profile = await this.resolveProfile(userId);
+    const profileId = profile.id;
+
     const photo = await this.photoRepo.findOne({
       where: {
         id,
-        user_id: userId,
+        user_id: profileId,
       },
     });
 
@@ -139,7 +178,7 @@ export class UserPhotoService {
 
     // primary update
     if (dto.is_primary) {
-      await this.photoRepo.update({ user_id: userId }, { is_primary: false });
+      await this.photoRepo.update({ user_id: profileId }, { is_primary: false });
     }
 
     // update DB
@@ -160,9 +199,12 @@ export class UserPhotoService {
 
   async replaceAllPhotos(userId: number, files: Express.Multer.File[]) {
     // old photos
+    const profile = await this.resolveProfile(userId);
+    const profileId = profile.id;
+
     const oldPhotos = await this.photoRepo.find({
       where: {
-        user_id: userId,
+        user_id: profileId,
       },
     });
 
@@ -188,7 +230,7 @@ export class UserPhotoService {
     // =========================
 
     await this.photoRepo.delete({
-      user_id: userId,
+      user_id: profileId,
     });
 
     // =========================
@@ -201,7 +243,7 @@ export class UserPhotoService {
       const file = files[i];
 
       const photo = this.photoRepo.create({
-        user_id: userId,
+        user_id: profileId,
 
         photo: file.filename,
 
@@ -229,10 +271,13 @@ export class UserPhotoService {
     // FIND PHOTO
     // =========================
 
+    const profile = await this.resolveProfile(userId);
+    const profileId = profile.id;
+
     const photo = await this.photoRepo.findOne({
       where: {
         id,
-        user_id: userId,
+        user_id: profileId,
       },
     });
 
@@ -259,7 +304,7 @@ export class UserPhotoService {
     // DELETE DB RECORD
     // =========================
 
-    await this.photoRepo.delete(id);
+    await this.photoRepo.delete({ id, user_id: profileId });
 
     // =========================
     // CHECK REMAINING PHOTOS
@@ -267,7 +312,7 @@ export class UserPhotoService {
 
     const remainingPhotos = await this.photoRepo.find({
       where: {
-        user_id: userId,
+        user_id: profileId,
       },
 
       order: {

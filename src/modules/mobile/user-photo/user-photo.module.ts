@@ -5,9 +5,10 @@ import { UserPhoto } from './user-photo.entity';
 import { UserPhotoService } from './user-photo.service';
 import { UserPhotoController } from './user-photo.controller';
 import { UsersModule } from '../users/users.module';
+import { Profile } from '../profile/profile.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserPhoto]), UsersModule],
+  imports: [TypeOrmModule.forFeature([UserPhoto, Profile]), UsersModule],
 
   controllers: [UserPhotoController],
 

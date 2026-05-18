@@ -1,6 +1,7 @@
 import {
   IsInt,
   IsNumber,
+  IsString,
   Min,
 } from 'class-validator';
 
@@ -10,7 +11,7 @@ export class CreateUserTraitLedgerDto {
 
   @IsInt()
   trait_id!: number;
-
+  
   @IsNumber()
   @Min(0)
   trait_max_value!: number;

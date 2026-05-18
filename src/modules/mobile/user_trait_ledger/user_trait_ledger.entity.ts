@@ -7,8 +7,10 @@ import {
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Trait } from '../../admin/trait/trait.entity';
+import { Unique } from 'typeorm';
 
 @Entity('user_trait_ledger')
+@Unique(['user_id', 'trait_id'])
 export class UserTraitLedger {
   @PrimaryGeneratedColumn()
   id!: number;

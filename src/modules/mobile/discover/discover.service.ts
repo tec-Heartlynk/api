@@ -115,8 +115,6 @@ export class DiscoverService {
       });
     }
 
-    console.log('normalizedWhoOpenMeeting:', normalizedWhoOpenMeeting);
-
     // ✅ Remove Crossed Profiles
     if (crossedUserIds.length > 0) {
       query.andWhere('user.id NOT IN (:...crossedUserIds)', {

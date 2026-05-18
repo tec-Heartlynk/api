@@ -13,6 +13,8 @@ import { QuizModule as AdminQuizModule } from './modules/admin/quiz-question/qui
 import { SectionModule } from './modules/admin/section/section.module';
 import { DomainModule } from './modules/admin/domain/domain.module';
 import { TraitModule } from './modules/admin/trait/trait.module';
+import { FrictionsModule } from './modules/admin/friction/frictions.module';
+import { RepairBonusModule } from './modules/admin/repair-bonus/repair-bonus.module';
 
 //Mobile
 import { UsersModule } from './modules/mobile/users/users.module';
@@ -55,9 +57,9 @@ import { UserPhotoModule } from './modules/mobile/user-photo/user-photo.module';
     AuthModule,
     UsersModule,
     EmployeeModule,
-
+    FrictionsModule,
     ScheduleModule.forRoot(),
-
+    RepairBonusModule,
     ProfileModule,
     OptionModule,
     OptionCategoryModule,

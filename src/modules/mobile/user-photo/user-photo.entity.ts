@@ -20,13 +20,17 @@ export class UserPhoto {
   @Column()
   user_id!: number;
 
-  @Index()
   @Column()
   photo!: string;
 
-  // 1 = primary photo, 0 = normal photo
   @Column({ type: 'boolean', default: false })
   is_primary!: boolean;
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 
   @ManyToOne(() => User, (user) => user.photos, {
     onDelete: 'CASCADE',

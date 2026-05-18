@@ -32,11 +32,7 @@ export class ProfileService {
   ) {}
 
   // Create profile for user
-  async create(
-    userId: number,
-    dto: CreateProfileDto,
-    files?: Express.Multer.File[],
-  ) {
+  async create(userId: number, dto: CreateProfileDto) {
     try {
       const existing = await this.profileRepo.findOne({
         where: { user: { id: userId } },
@@ -48,11 +44,6 @@ export class ProfileService {
         );
       }
 
-      // ✅ minimum 1 image required
-      if (!files || files.length === 0) {
-        throw new BadRequestException('At least one profile image is required');
-      }
-
       // ✅ create profile first
       const profile = this.profileRepo.create({
         ...dto,
@@ -60,20 +51,6 @@ export class ProfileService {
       });
 
       const savedProfile = await this.profileRepo.save(profile);
-
-      // ✅ insert photos into user_photo table
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-
-        await this.userPhotoService.create({
-          user_id: savedProfile.id,
-
-          photo: file.filename,
-
-          // first image primary
-          is_primary: i === 0,
-        });
-      }
 
       // ✅ update screen status
       if (dto.screen_status !== undefined) {
@@ -128,7 +105,9 @@ export class ProfileService {
 
       const user = profile.user;
       if (!user) {
-        throw new InternalServerErrorException('Profile user relation is missing');
+        throw new InternalServerErrorException(
+          'Profile user relation is missing',
+        );
       }
 
       // get all option titles
@@ -145,7 +124,6 @@ export class ProfileService {
         profile.name,
         profile.dob,
         profile.identity,
-        profile.self_describe,
         profile.who_open_meeting,
         profile.location,
         profile.latitude,
@@ -155,18 +133,22 @@ export class ProfileService {
         // preferences
         user.preferences?.looking_for,
         user.preferences?.feel,
-        user.preferences?.interests?.length
-          ? user.preferences.interests
-          : null,
+        user.preferences?.interests?.length ? user.preferences.interests : null,
         user.preferences?.height,
         user.preferences?.occupation,
         user.preferences?.religion,
         user.preferences?.ethnicity,
         user.preferences?.education,
-        user.preferences?.language?.length
-          ? user.preferences.language
-          : null,
+        user.preferences?.language?.length ? user.preferences.language : null,
         user.preferences?.political_learning,
+        user.preferences?.open_to_children,
+        user.preferences?.pets,
+        user.preferences?.drinking,
+        user.preferences?.smoking,
+        user.preferences?.diet,
+        user.preferences?.fitness_level,
+        user.preferences?.travel_habits,
+        user.preferences?.work_life,
       ];
 
       const filledFields = profileFields.filter(
@@ -267,8 +249,7 @@ export class ProfileService {
 
                   political_learning: {
                     id: user.preferences.political_learning,
-                    title:
-                      optionMap[user.preferences.political_learning],
+                    title: optionMap[user.preferences.political_learning],
                   },
 
                   interests: user.preferences.interests?.map((id) => ({
@@ -339,7 +320,9 @@ export class ProfileService {
 
       const user = profile.user;
       if (!user) {
-        throw new InternalServerErrorException('Profile user relation is missing');
+        throw new InternalServerErrorException(
+          'Profile user relation is missing',
+        );
       }
 
       // option mapping
@@ -360,7 +343,6 @@ export class ProfileService {
         profile.name,
         profile.dob,
         profile.identity,
-        profile.self_describe,
         profile.who_open_meeting,
         profile.location,
         profile.latitude,
@@ -370,18 +352,22 @@ export class ProfileService {
         // preferences
         user.preferences?.looking_for,
         user.preferences?.feel,
-        user.preferences?.interests?.length
-          ? user.preferences.interests
-          : null,
+        user.preferences?.interests?.length ? user.preferences.interests : null,
         user.preferences?.height,
         user.preferences?.occupation,
         user.preferences?.religion,
         user.preferences?.ethnicity,
         user.preferences?.education,
-        user.preferences?.language?.length
-          ? user.preferences.language
-          : null,
+        user.preferences?.language?.length ? user.preferences.language : null,
         user.preferences?.political_learning,
+        user.preferences?.open_to_children,
+        user.preferences?.pets,
+        user.preferences?.drinking,
+        user.preferences?.smoking,
+        user.preferences?.diet,
+        user.preferences?.fitness_level,
+        user.preferences?.travel_habits,
+        user.preferences?.work_life,
       ];
 
       const filledFields = profileFields.filter(
@@ -403,19 +389,18 @@ export class ProfileService {
         profile.identity,
         profile.self_describe,
         profile.who_open_meeting,
-        profile.location,
-        user.preferences?.interests?.length
-          ? user.preferences.interests
-          : null,
         user.preferences?.height,
         user.preferences?.occupation,
         user.preferences?.religion,
         user.preferences?.ethnicity,
         user.preferences?.education,
-        user.preferences?.language?.length
-          ? user.preferences.language
-          : null,
+        user.preferences?.language?.length ? user.preferences.language : null,
         user.preferences?.political_learning,
+        user.preferences?.open_to_children,
+        user.preferences?.pets,
+        user.preferences?.drinking,
+        user.preferences?.smoking,
+        user.preferences?.diet,
       ];
 
       const aboutYouStatus = aboutYouFields.every(
@@ -439,9 +424,10 @@ export class ProfileService {
 
       // 4. Interests & Lifestyle
       const interestLifestyleFields = [
-        user.preferences?.interests?.length
-          ? user.preferences.interests
-          : null,
+        user.preferences?.interests?.length ? user.preferences.interests : null,
+        user.preferences?.fitness_level,
+        user.preferences?.travel_habits,
+        user.preferences?.work_life,
       ];
 
       const interestLifestyleStatus = interestLifestyleFields.some((field) => {
@@ -454,7 +440,6 @@ export class ProfileService {
         ? 'Completed'
         : 'Pending';
 
-      // 5. Compatibility Answers
       // 5. Compatibility Answers
 
       // total questions count

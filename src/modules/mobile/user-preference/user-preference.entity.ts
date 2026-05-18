@@ -70,7 +70,14 @@ export class UserPreference {
   @Column({ type: 'int', nullable: true })
   diet!: number;
 
-  // ✅ PROFILE RELATION
+  @Column({ type: 'int', nullable: true })
+  fitness_level!: number;
+
+  @Column({ type: 'int', nullable: true })
+  travel_habits!: number;
+
+  @Column({ type: 'int', nullable: true })
+  work_life!: number;
 
   // ✅ USER RELATION
   @ManyToOne(() => User, (user) => user.userPreferences, {

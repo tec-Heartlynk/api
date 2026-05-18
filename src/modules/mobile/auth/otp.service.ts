@@ -19,6 +19,8 @@ export class OtpService {
     );
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000); // expiryMinutes 2 min
 
+    email = email.toLowerCase().trim();
+
     const record = this.repo.create({
       email,
       otp,
@@ -27,10 +29,15 @@ export class OtpService {
       attempts: 0,
     });
 
-    return this.repo.save(record);
+    const saved = await this.repo.save(record);
+
+    console.log('OTP SAVED =>', saved);
+
+    return saved;
   }
 
   findOtp(email: string, otp: string) {
+    email = email.toLowerCase().trim();
     return this.repo.findOne({
       where: { email, otp, verified: false },
     });
@@ -47,10 +54,18 @@ export class OtpService {
 
   //findLatestOtp
   async findLatestOtp(email: string) {
-    return this.repo.findOne({
+    email = email.toLowerCase().trim();
+
+    // console.log('SEARCH EMAIL =>', email);
+
+    const otp = await this.repo.findOne({
       where: { email },
       order: { createdAt: 'DESC' },
     });
+
+    // console.log('FOUND OTP =>', otp);
+
+    return otp;
   }
 
   //Update attempts and block if necessary
@@ -68,16 +83,20 @@ export class OtpService {
   //REMOVE OTPs after expiry CHECK EVERY MINUTE
   @Cron(CronExpression.EVERY_MINUTE)
   async deleteExpiredOtps() {
+    const expiryMinutes = Number(
+      this.configService.get<string>('OTP_EXPIRY_MINUTES') || 2,
+    );
+    const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000); // expiryMinutes 2 min
+
     await this.repo
       .createQueryBuilder()
       .delete()
       .where('expiresAt < :now', { now: new Date() })
       .execute();
-
-    //console.log('Expired OTPs deleted');
   }
 
   async deleteByEmail(email: string) {
+    email = email.toLowerCase().trim();
     return this.repo.delete({ email });
   }
 }

@@ -32,6 +32,10 @@ export class DiscoverService {
     userId: number,
     page: number,
     limit: number,
+    minAge?: number,
+    maxAge?: number,
+    maxDistance?: number,
+    interests?: string,
   ) {
     // ✅ Current User Profile
     const myProfile = await this.profileRepo.findOne({
@@ -50,6 +54,8 @@ export class DiscoverService {
     const myLat = Number(myProfile.latitude);
     const myLng = Number(myProfile.longitude);
 
+    const WhoOpenMeeting = myProfile.who_open_meeting;
+
     // ✅ Get Crossed Users
     const crossedUsers = await this.crossRepo.find({
       where: {
@@ -60,11 +66,14 @@ export class DiscoverService {
     // ✅ crossed other user ids
     const crossedUserIds = crossedUsers.map((item) => item.to_user_id);
 
+    // ✅ Current User Cross Count
+    const crossedCount = crossedUsers.length;
+
     // ✅ Get Profiles
     const query = this.profileRepo
       .createQueryBuilder('profile')
       .leftJoinAndSelect('profile.user', 'user')
-      .leftJoinAndSelect('profile.photos', 'photos')
+      .leftJoinAndSelect('user.photos', 'photos')
       .leftJoinAndSelect('user.userPreferences', 'userPreferences')
       .leftJoinAndMapOne(
         'user.settings',
@@ -80,11 +89,96 @@ export class DiscoverService {
       })
       .andWhere('user.status = 8');
 
+    // ✅ Dynamic Age Filter
+    if (minAge && maxAge) {
+      query.andWhere(
+        `
+      DATE_PART(
+        'year',
+        AGE(CURRENT_DATE, profile.dob)
+      ) BETWEEN :minAge AND :maxAge
+      `,
+        {
+          minAge,
+          maxAge,
+        },
+      );
+    }
+
+    // ✅ WhoOpenMeeting Filter
+    const normalizedWhoOpenMeeting = WhoOpenMeeting?.trim()?.toLowerCase();
+
+    // ✅ WhoOpenMeeting Filter
+    if (normalizedWhoOpenMeeting) {
+      query.andWhere('LOWER(TRIM(profile.who_open_meeting)) IN (:...values)', {
+        values: [normalizedWhoOpenMeeting],
+      });
+    }
+
+    console.log('normalizedWhoOpenMeeting:', normalizedWhoOpenMeeting);
+
     // ✅ Remove Crossed Profiles
     if (crossedUserIds.length > 0) {
       query.andWhere('user.id NOT IN (:...crossedUserIds)', {
         crossedUserIds,
       });
+    }
+
+    // ✅ Dynamic Distance Filter
+    if (maxDistance !== undefined && maxDistance !== null) {
+      const distanceLimit = Number(maxDistance); // dynamic input (10, 30, 50...)
+
+      query.andWhere(
+        `
+    profile.latitude IS NOT NULL
+    AND profile.longitude IS NOT NULL
+    AND
+    (
+      6371 * ACOS(
+        LEAST(1, GREATEST(-1,
+          COS(RADIANS(:myLat)) *
+          COS(RADIANS(CAST(profile.latitude AS DOUBLE PRECISION))) *
+          COS(RADIANS(CAST(profile.longitude AS DOUBLE PRECISION)) - RADIANS(:myLng)) +
+          SIN(RADIANS(:myLat)) *
+          SIN(RADIANS(CAST(profile.latitude AS DOUBLE PRECISION)))
+        ))
+      )
+    ) <= :maxDistance
+    `,
+        {
+          myLat,
+          myLng,
+          maxDistance: distanceLimit,
+        },
+      );
+    }
+
+    // ✅ Dynamic Interest Filter
+    if (interests) {
+      const interestArray = interests.split(',').map((item) => item.trim());
+
+      const interestConditions: string[] = [];
+      const interestParams: any = {};
+
+      interestArray.forEach((id, index) => {
+        interestConditions.push(`up.interests::text LIKE :interest${index}`);
+
+        interestParams[`interest${index}`] = `%${id}%`;
+      });
+
+      query.andWhere(
+        `
+      EXISTS (
+        SELECT 1
+        FROM user_preferences up
+        WHERE up.user_id = "user"."id"
+        AND (
+          ${interestConditions.join(' OR ')}
+        )
+      )
+      `,
+        interestParams,
+      );
     }
 
     // ✅ Pagination
@@ -133,10 +227,10 @@ export class DiscoverService {
         interestIds = [...new Set(interestIds)];
 
         // ✅ Get Interest Names
-        let interests: CategoryQuestionOption[] = [];
+        let interestsData: CategoryQuestionOption[] = [];
 
         if (interestIds.length > 0) {
-          interests = await this.optionRepo.find({
+          interestsData = await this.optionRepo.find({
             where: {
               id: In(interestIds),
             },
@@ -146,24 +240,16 @@ export class DiscoverService {
         // ✅ HEART CHECK
         const heartExists = await this.heartRepo.findOne({
           where: {
-            from_user_id: userId, // current user
-            to_user_id: profile.user?.id, // other user
+            from_user_id: userId,
+            to_user_id: profile.user?.id,
           },
         });
 
         // ✅ STAR CHECK
         const starExists = await this.starRepo.findOne({
           where: {
-            from_user_id: userId, // current user
-            to_user_id: profile.user?.id, // other user
-          },
-        });
-
-        // ✅ CROSS CHECK
-        const crossExists = await this.crossRepo.findOne({
-          where: {
-            from_user_id: userId, // current user
-            to_user_id: profile.user?.id, // other user
+            from_user_id: userId,
+            to_user_id: profile.user?.id,
           },
         });
 
@@ -172,7 +258,7 @@ export class DiscoverService {
 
           full_name: profile.name,
 
-          bio: profile.self_describe ? profile.self_describe : '',
+          bio: profile.self_describe || '',
 
           identity: profile.identity,
 
@@ -188,10 +274,10 @@ export class DiscoverService {
 
           // ✅ Distance
           distance_in_km: Number(distance.toFixed(2)),
+
           distance_unit: 'km',
 
           // ✅ Photos
-
           photos: profile.photos?.map((item) => ({
             id: item.id,
             photo: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${item.photo}`,
@@ -199,7 +285,7 @@ export class DiscoverService {
           })),
 
           // ✅ Interests
-          interests: interests.map((item) => ({
+          interests: interestsData.map((item) => ({
             id: item.id,
             name: item.option_title,
           })),
@@ -209,9 +295,6 @@ export class DiscoverService {
 
           // ✅ Star Status
           is_starred: !!starExists,
-
-          // ✅ Cross Status
-          //is_crossed: !!crossExists,
 
           // ✅ User Info
           user: {
@@ -223,14 +306,11 @@ export class DiscoverService {
           verified_status: profile.user?.settings?.verified_status ?? 0,
 
           match_status: profile.user?.settings?.match_status ?? 0,
-
-          // ✅ user_settings data
         };
       }),
     );
 
     // ✅ Sort by nearest
-
     data.sort((a, b) => a.distance_in_km - b.distance_in_km);
 
     return {
@@ -238,6 +318,7 @@ export class DiscoverService {
       total: totalProfiles,
       page,
       limit,
+      crossed_count: crossedCount,
       data,
     };
   }

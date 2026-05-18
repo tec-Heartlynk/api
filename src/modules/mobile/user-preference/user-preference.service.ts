@@ -6,11 +6,13 @@ import { CreateUserPreferenceDto } from './dto/create-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { UpdateUserExtraPreferenceDto } from './dto/update-user-extar-preference.dto';
 import { UpdateUserAboutPreferenceDto } from './dto/update-user-profile-preference.dto';
+import { UpdateRelationGoalDto } from './dto/update-relation-goal.dto';
 import { UsersService } from '../users/users.service';
 import { CrossService } from '../cross/cross.service';
 import { InternalServerErrorException } from '@nestjs/common';
 
 import { Profile } from '../profile/profile.entity';
+import { UpdateInterestsLifestyleDto } from './dto/update-intrests-lifestyle.dto';
 
 @Injectable()
 export class UserPreferenceService {
@@ -54,14 +56,29 @@ export class UserPreferenceService {
   }
 
   // ✅ Get logged-in user preference
-  async findByUser(user_id: number) {
-    const data = await this.repo.findOne({ where: { user_id } });
+  async findByUser(userId: number) {
+    try {
+      const preference = await this.repo.findOne({
+        where: {
+          user: {
+            id: userId,
+          },
+        },
+      });
 
-    if (!data) {
-      throw new NotFoundException('Preferences not found');
+      // ✅ DO NOT THROW ERROR
+      if (!preference) {
+        return null;
+      }
+
+      return preference;
+    } catch (error) {
+      console.error('FIND PREFERENCE ERROR:', error);
+
+      throw new InternalServerErrorException(
+        'Failed to fetch user preferences',
+      );
     }
-
-    return data;
   }
 
   // ✅ Safe update
@@ -174,10 +191,100 @@ export class UserPreferenceService {
       };
 
       await this.repo.save(updatedPreference);
+      await this.crossService.deleteByUserId(userId);
 
       return {
         success: true,
         message: 'Profile + Preferences updated safely',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : 'Something went wrong',
+      );
+    }
+  }
+
+  async updateRelationGoal(userId: number, dto: UpdateRelationGoalDto) {
+    try {
+      // =========================
+      // GET EXISTING DATA FIRST
+      // =========================
+
+      const profile = await this.profileRepo.findOne({
+        where: { user_id: userId },
+      });
+
+      const preference = await this.repo.findOne({
+        where: { user_id: userId },
+      });
+
+      if (!profile || !preference) {
+        throw new NotFoundException('User data not found');
+      }
+
+      // =========================
+      // PREFERENCES MERGE (SAFE)
+      // =========================
+
+      const updatedPreference = {
+        ...preference,
+        looking_for: dto.looking_for ?? preference.looking_for,
+        feel: dto.feel ?? preference.feel,
+      };
+
+      await this.repo.save(updatedPreference);
+      await this.crossService.deleteByUserId(userId);
+
+      return {
+        success: true,
+        message: 'Relation goals updated Successfully',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : 'Something went wrong',
+      );
+    }
+  }
+
+  async updateInterestsLifestyle(
+    userId: number,
+    dto: UpdateInterestsLifestyleDto,
+  ) {
+    try {
+      // =========================
+      // GET EXISTING DATA FIRST
+      // =========================
+
+      const profile = await this.profileRepo.findOne({
+        where: { user_id: userId },
+      });
+
+      const preference = await this.repo.findOne({
+        where: { user_id: userId },
+      });
+
+      if (!profile || !preference) {
+        throw new NotFoundException('User data not found');
+      }
+
+      // =========================
+      // PREFERENCES MERGE (SAFE)
+      // =========================
+
+      const updatedPreference = {
+        ...preference,
+        interests: dto.interests ?? preference.interests,
+        fitness_level: dto.fitness_level ?? preference.fitness_level,
+        travel_habits: dto.travel_habits ?? preference.travel_habits,
+        work_life: dto.work_life ?? preference.work_life,
+      };
+
+      await this.repo.save(updatedPreference);
+      await this.crossService.deleteByUserId(userId);
+
+      return {
+        success: true,
+        message: 'Interests and lifestyle updated Successfully',
       };
     } catch (error) {
       throw new InternalServerErrorException(

@@ -13,6 +13,7 @@ import { UserSettings } from '../user-settings/settings.entity';
 import { UserPreference } from '../user-preference/user-preference.entity';
 import { UserPreferenceQuestionAnswer } from '../user-preference-question-answer/user-preference-question-answer.entity';
 import { UserTraitLedger } from '../../mobile/user_trait_ledger/user_trait_ledger.entity';
+import { UserPhoto } from '../user-photo/user-photo.entity';
 
 export enum Role {
   USER = 'USER',
@@ -69,4 +70,7 @@ export class User {
 
   @OneToMany(() => UserTraitLedger, (ledger) => ledger.user)
   userTraitLedgers!: UserTraitLedger[];
+
+  @OneToMany(() => UserPhoto, (photo) => photo.user)
+  photos!: UserPhoto[];
 }

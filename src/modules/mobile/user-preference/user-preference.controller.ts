@@ -16,6 +16,8 @@ import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 import { UpdateUserExtraPreferenceDto } from './dto/update-user-extar-preference.dto';
 import { UpdateUserAboutPreferenceDto } from './dto/update-user-profile-preference.dto';
+import { UpdateRelationGoalDto } from './dto/update-relation-goal.dto';
+import { UpdateInterestsLifestyleDto } from './dto/update-intrests-lifestyle.dto';
 
 @Controller('mobile/user-preferences')
 @UseGuards(JwtAuthGuard)
@@ -74,10 +76,22 @@ export class UserPreferenceController {
     return this.service.update(user_id, dto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch('update-about')
   updateAbout(@Req() req, @Body() dto: UpdateUserAboutPreferenceDto) {
     return this.service.updateAbout(req.user.userId, dto);
+  }
+
+  @Patch('update-relation-goals')
+  updateRelationGoal(@Req() req, @Body() dto: UpdateRelationGoalDto) {
+    return this.service.updateRelationGoal(req.user.userId, dto);
+  }
+
+  @Patch('update-interests-lifestyle')
+  updateInterestsLifestyle(
+    @Req() req,
+    @Body() dto: UpdateInterestsLifestyleDto,
+  ) {
+    return this.service.updateInterestsLifestyle(req.user.userId, dto);
   }
 
   // ✅ Delete own preferences

@@ -3,9 +3,11 @@ import {
   Post,
   Body,
   Get,
+  Patch,
   Param,
   Delete,
   UseGuards,
+  Query,
   Req,
 } from '@nestjs/common';
 
@@ -15,6 +17,7 @@ import { BulkUserPreferenceQuestionAnswerDto } from './dto/bulk-user-preference.
 
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 import { User } from '../users/user.entity';
+import { CreateQuizDto } from '../quiz-question/dto/create-quiz.dto';
 
 @Controller('mobile/user-preference-question-answer')
 @UseGuards(JwtAuthGuard) // 🔐 protect all routes
@@ -43,4 +46,30 @@ export class UserPreferenceQuestionAnswerController {
   // remove(@Req() req, @Param('id') id: number) {
   //   return this.service.remove(+id, req.user?.userId);
   // }
+
+  @Patch('update-question-answer')
+  async updateQuiz(
+    @Req() req,
+    @Body() dto: BulkUserPreferenceQuestionAnswerDto,
+  ) {
+    return this.service.updateQuizAnswers(req.user.userId, dto);
+  }
+
+  @Get('getall-save-preference-question-answer')
+  async getMyAllAnswers(@Req() req, @Query('order') order: 'ASC' | 'DESC') {
+    return this.service.getMyAllAnswers(req.user.userId, order || 'ASC');
+  }
+
+  @Get('category/:cat_slug')
+  async getMyCategoryAnswers(
+    @Req() req,
+    @Param('cat_slug') cat_slug: string,
+    @Query('order') order: 'ASC' | 'DESC',
+  ) {
+    return this.service.getMyCategoryAnswers(
+      req.user.userId,
+      cat_slug,
+      order || 'ASC',
+    );
+  }
 }

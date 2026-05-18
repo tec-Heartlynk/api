@@ -8,7 +8,8 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { Profile } from '../profile/profile.entity';
+
+import { User } from '../users/user.entity';
 
 @Entity('user_photo')
 export class UserPhoto {
@@ -18,6 +19,7 @@ export class UserPhoto {
   @Index()
   @Column()
   user_id!: number;
+
   @Index()
   @Column()
   photo!: string;
@@ -26,9 +28,9 @@ export class UserPhoto {
   @Column({ type: 'boolean', default: false })
   is_primary!: boolean;
 
-  @ManyToOne(() => Profile, (profile) => profile.photos, {
+  @ManyToOne(() => User, (user) => user.photos, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
-  profile!: Profile;
+  user!: User;
 }

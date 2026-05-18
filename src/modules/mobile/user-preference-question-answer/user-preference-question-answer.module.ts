@@ -8,6 +8,7 @@ import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 import { QuizOption } from '../../admin/quiz-question/quiz-option.entity';
 import { UsersModule } from '../users/users.module';
 import { UserTraitLedgerModule } from '../user_trait_ledger/user-trait-ledger.module';
+import { CrossModule } from '../cross/cross.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UserTraitLedgerModule } from '../user_trait_ledger/user-trait-ledger.mo
     ]),
     UsersModule,
     UserTraitLedgerModule,
+    CrossModule,
   ],
   controllers: [UserPreferenceQuestionAnswerController],
   providers: [UserPreferenceQuestionAnswerService],

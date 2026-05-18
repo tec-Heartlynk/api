@@ -52,7 +52,7 @@ export class Profile {
 
   // ✅ photos relation
 
-  @OneToMany(() => UserPhoto, (photo) => photo.profile)
+  @OneToMany(() => UserPhoto, (photo) => photo.user)
   photos!: UserPhoto[];
 
   // ✅ user relation

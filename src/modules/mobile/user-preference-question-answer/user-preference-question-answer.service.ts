@@ -13,6 +13,7 @@ import { UsersService } from '../users/users.service';
 import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 import { QuizOption } from '../../admin/quiz-question/quiz-option.entity';
 import { UserTraitLedgerService } from '../user_trait_ledger/user-trait-ledger.service';
+import { CrossService } from '../cross/cross.service';
 
 @Injectable()
 export class UserPreferenceQuestionAnswerService {
@@ -20,7 +21,7 @@ export class UserPreferenceQuestionAnswerService {
     @InjectRepository(UserPreferenceQuestionAnswer)
     private userRepo: Repository<UserPreferenceQuestionAnswer>,
     private userService: UsersService,
-
+    private crossService: CrossService,
     @InjectRepository(QuizQuestion)
     private questionRepo: Repository<QuizQuestion>,
 
@@ -115,7 +116,96 @@ export class UserPreferenceQuestionAnswerService {
     }
   }
 
+  // Update Quiz Answers for a category
+  async updateQuizAnswers(
+    userId: number,
+    dto: BulkUserPreferenceQuestionAnswerDto,
+  ) {
+    try {
+      const { cat_slug, data } = dto;
 
+      for (const item of data) {
+        await this.userRepo.update(
+          {
+            user_id: userId,
+            q_id: item.q_id,
+            cat_slug,
+          },
+          {
+            ans_id: item.ans_id,
+          },
+        );
+      }
+
+      await this.crossService.deleteByUserId(userId);
+
+      return {
+        status: true,
+        message: `${cat_slug} answers updated successfully`,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(error.message);
+      }
+
+      throw new InternalServerErrorException('Something went wrong');
+    }
+}
+
+  async getMyAllAnswers(userId: number, order: 'ASC' | 'DESC' = 'ASC') {
+    try {
+      const data = await this.userRepo.find({
+        where: {
+          user_id: userId,
+        },
+        order: {
+          id: order,
+        },
+      });
+
+      return {
+        status: true,
+        total: data.length,
+        data,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(error.message);
+      }
+
+      throw new InternalServerErrorException('Something went wrong');
+    }
+  }
+  
+  async getMyCategoryAnswers(
+    userId: number,
+    cat_slug: string,
+    order: 'ASC' | 'DESC' = 'ASC',
+  ) {
+    try {
+      const data = await this.userRepo.find({
+        where: {
+          user_id: userId,
+          cat_slug,
+        },
+        order: {
+          id: order,
+        },
+      });
+
+      return {
+        status: true,
+        total: data.length,
+        data,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(error.message);
+      }
+
+      throw new InternalServerErrorException('Something went wrong');
+    }
+  }
 
   async calculateLedgerData(
     userId: number,
@@ -244,5 +334,5 @@ export class UserPreferenceQuestionAnswerService {
       userId,
       ledgerData,
     );
-  }
+  }  
 }

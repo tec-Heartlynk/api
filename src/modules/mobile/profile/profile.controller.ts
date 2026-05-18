@@ -30,7 +30,7 @@ export class ProfileController {
     @Body() dto: CreateProfileDto,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.profileService.create(req.user.userId, dto, files);
+    return this.profileService.create(req.user.userId, dto);
   }
 
   // ✅ GET PROFILE

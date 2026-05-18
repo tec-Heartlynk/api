@@ -7,17 +7,24 @@ export class DiscoverController {
   constructor(private readonly discoverService: DiscoverService) {}
 
   // ✅ ALL PROFILES WITH DISTANCE
-  @Get('profiles')
+
   @UseGuards(JwtAuthGuard)
-  async getProfiles(
+  @Get('profiles')
+  getProfiles(
     @Req() req,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('minAge') minAge: number,
+    @Query('maxAge') maxAge: number,
+    @Query('maxDistance') maxDistance: number,
+    @Query('interests') interests: string,
   ) {
     return this.discoverService.getAllProfilesWithDistance(
       req.user.userId,
-      Number(page),
-      Number(limit),
+      1,
+      10,
+      minAge,
+      maxAge,
+      maxDistance,
+      interests,
     );
   }
 }

@@ -29,11 +29,11 @@ export class UserPreferenceQuestionAnswerController {
   create(@Req() req, @Body() dto: BulkUserPreferenceQuestionAnswerDto) {
     return this.service.create(req.user.userId, dto);
   }
-  // // 📥 GET ALL
-  // @Get()
-  // findAll(@Req() req) {
-  //   return this.service.findAll(req.user?.userId);
-  // }
+  // 📥 GET ALL
+  @Get()
+  callLedger(@Req() req) {
+    return this.service.callLedger(72);
+  }
 
   // // 📥 GET ONE
   // @Get(':id')

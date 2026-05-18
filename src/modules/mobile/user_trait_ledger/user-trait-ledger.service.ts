@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { In } from 'typeorm';
 
 import { UserTraitLedger } from './user_trait_ledger.entity';
 import { CreateUserTraitLedgerDto } from './dto/create-user-trait-ledger.dto';
@@ -55,5 +56,88 @@ export class UserTraitLedgerService {
     const entity = await this.findOne(id);
 
     return this.repository.remove(entity);
+  }
+
+  async saveLedgerForUser(
+    userId: number,
+    traitId: number,
+    traitMaxValue: number,
+    userTraitValue: number,
+  ): Promise<UserTraitLedger> {
+    // Normalized Trait Value = Math.round((User Raw Value / Max Possible Raw Value) × 100)
+    const normalizedValue = traitMaxValue === 0
+      ? 0
+      : Math.round((userTraitValue / traitMaxValue) * 100);
+
+    const dto: CreateUserTraitLedgerDto = {
+      user_id: userId,
+      trait_id: traitId,
+      trait_max_value: traitMaxValue,
+      user_trait_value: userTraitValue,
+      normalized_value: normalizedValue,
+    };
+
+    const entity = this.repository.create(dto);
+
+    return this.repository.save(entity);
+  }
+
+  async storeUserTraitLedger(
+    userId: number,
+    ledgerData: {
+      traitId: number;
+      traitMaxValue: number;
+      userTraitValue: number;
+      normalizedValue: number;
+    }[],
+  ): Promise<UserTraitLedger[]> {
+
+    const traitIds = ledgerData.map(item => item.traitId);
+
+    // Fetch all existing records in ONE query
+    const existingRecords = await this.repository.find({
+      where: {
+        user_id: userId,
+        trait_id: In(traitIds),
+      },
+    });
+
+    // Create lookup map
+    const existingMap = new Map<number, UserTraitLedger>();
+
+    existingRecords.forEach(record => {
+      existingMap.set(record.trait_id, record);
+    });
+
+    const entities: UserTraitLedger[] = [];
+
+    for (const data of ledgerData) {
+
+      const normalizedValue =
+        data.traitMaxValue === 0 ? 0 : data.normalizedValue;
+
+      let entity = existingMap.get(data.traitId);
+
+      if (entity) {
+        // UPDATE
+        entity.trait_max_value = data.traitMaxValue;
+        entity.user_trait_value = data.userTraitValue;
+        entity.normalized_value = normalizedValue;
+      } else {
+        // CREATE
+        entity = this.repository.create({
+          user_id: userId,
+          trait_id: data.traitId,
+          trait_max_value: data.traitMaxValue,
+          user_trait_value: data.userTraitValue,
+          normalized_value: normalizedValue,
+        });
+      }
+
+      entities.push(entity);
+    }
+
+    // SINGLE bulk save query
+    return await this.repository.save(entities);
   }
 }

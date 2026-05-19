@@ -92,13 +92,15 @@ export class UserPreferenceQuestionAnswerService {
       if (dto?.screen_status !== undefined) {
         await this.userService.updateStatus(userId, dto.screen_status);
       }
-
-      // Calculate and store user trait ledger
-      const ledgerData = await this.calculateLedgerData(userId);
-      await this.userTraitLedgerService.storeUserTraitLedger(
-        userId,
-        ledgerData,
-      );
+      if(cat_slug === 'lifestyle') {
+        // Calculate and store user trait ledger
+        const ledgerData = await this.calculateLedgerData(userId);
+        await this.userTraitLedgerService.storeUserTraitLedger(
+          userId,
+          ledgerData,
+        );
+      }
+      
 
       return {
         status: true,
@@ -138,6 +140,12 @@ export class UserPreferenceQuestionAnswerService {
       }
 
       await this.crossService.deleteByUserId(userId);
+      // Calculate and store user trait ledger
+      const ledgerData = await this.calculateLedgerData(userId);
+      await this.userTraitLedgerService.storeUserTraitLedger(
+        userId,
+        ledgerData,
+      );
 
       return {
         status: true,

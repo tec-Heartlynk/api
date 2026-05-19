@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Not } from 'typeorm';
+import {
+  calculateAge,
+  calculateDistance,
+} from '../../../common/function/common-function';
 
 import { Profile } from '../profile/profile.entity';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
 import { HeartAction } from '../heart/heart.entity';
 import { StarAction } from '../star/star.entity';
 import { CrossAction } from '../cross/cross.entity';
+import { UserPreference } from '../user-preference/user-preference.entity';
 
 @Injectable()
 export class DiscoverService {
@@ -25,6 +30,8 @@ export class DiscoverService {
 
     @InjectRepository(CrossAction)
     private readonly crossRepo: Repository<CrossAction>,
+    @InjectRepository(UserPreference)
+    private readonly userPreferenceRepo: Repository<UserPreference>,
   ) {}
 
   // ✅ GET ALL PROFILE WITH DISTANCE
@@ -56,6 +63,15 @@ export class DiscoverService {
 
     const WhoOpenMeeting = myProfile.who_open_meeting;
 
+    //Current User Interests
+
+    const userPreferenceData = await this.userPreferenceRepo.findOne({
+      where: {
+        user_id: userId,
+      },
+    });
+    const myInterests = userPreferenceData?.interests || [];
+
     // ✅ Get Crossed Users
     const crossedUsers = await this.crossRepo.find({
       where: {
@@ -65,7 +81,6 @@ export class DiscoverService {
 
     // ✅ crossed other user ids
     const crossedUserIds = crossedUsers.map((item) => item.to_user_id);
-
     // ✅ Current User Cross Count
     const crossedCount = crossedUsers.length;
 
@@ -151,14 +166,18 @@ export class DiscoverService {
       );
     }
 
-    // ✅ Dynamic Interest Filter
-    if (interests) {
-      const interestArray = interests.split(',').map((item) => item.trim());
+    // ✅ Dynamic + Default Interest Filter
 
+    const finalInterests =
+      interests && interests.trim().length > 0
+        ? interests.split(',').map((item) => item.trim())
+        : myInterests.map((item) => item.toString());
+
+    if (finalInterests.length > 0) {
       const interestConditions: string[] = [];
       const interestParams: any = {};
 
-      interestArray.forEach((id, index) => {
+      finalInterests.forEach((id, index) => {
         interestConditions.push(`up.interests::text LIKE :interest${index}`);
 
         interestParams[`interest${index}`] = `%${id}%`;
@@ -166,15 +185,15 @@ export class DiscoverService {
 
       query.andWhere(
         `
-      EXISTS (
-        SELECT 1
-        FROM user_preferences up
-        WHERE up.user_id = "user"."id"
-        AND (
-          ${interestConditions.join(' OR ')}
-        )
+    EXISTS (
+      SELECT 1
+      FROM user_preferences up
+      WHERE up.user_id = "user"."id"
+      AND (
+        ${interestConditions.join(' OR ')}
       )
-      `,
+    )
+    `,
         interestParams,
       );
     }
@@ -190,26 +209,16 @@ export class DiscoverService {
         const lat = Number(profile.latitude);
         const lng = Number(profile.longitude);
 
+        // ✅ Profile Settings
+        const profileSettings = profile.user?.settings;
+
         // ✅ Distance
-        const distance = this.calculateDistance(myLat, myLng, lat, lng);
+        const distance = calculateDistance(myLat, myLng, lat, lng);
 
-        // ✅ Age
+        // ✅ Age Calculate
         let age: number | null = null;
-
         if (profile.dob) {
-          const dob = new Date(profile.dob);
-          const today = new Date();
-
-          age = today.getFullYear() - dob.getFullYear();
-
-          const monthDiff = today.getMonth() - dob.getMonth();
-
-          if (
-            monthDiff < 0 ||
-            (monthDiff === 0 && today.getDate() < dob.getDate())
-          ) {
-            age--;
-          }
+          age = calculateAge(profile.dob);
         }
 
         // ✅ Interest IDs
@@ -262,7 +271,7 @@ export class DiscoverService {
 
           dob: profile.dob,
 
-          age,
+          age: profileSettings?.age ? age : 'hidden',
 
           latitude: profile.latitude,
 
@@ -270,10 +279,12 @@ export class DiscoverService {
 
           location: profile.location,
 
-          // ✅ Distance
-          distance_in_km: Number(distance.toFixed(2)),
+          // ✅ DISTANCE
+          distance_in_km: profileSettings?.distance
+            ? Number(distance.toFixed(2))
+            : 'hidden',
 
-          distance_unit: 'km',
+          distance_unit: profileSettings?.distance ? 'km' : 'hidden',
 
           // ✅ Photos
           photos:
@@ -310,7 +321,16 @@ export class DiscoverService {
     );
 
     // ✅ Sort by nearest
-    data.sort((a, b) => a.distance_in_km - b.distance_in_km);
+
+    data.sort((a, b) => {
+      const distanceA =
+        typeof a.distance_in_km === 'number' ? a.distance_in_km : Infinity;
+
+      const distanceB =
+        typeof b.distance_in_km === 'number' ? b.distance_in_km : Infinity;
+
+      return distanceA - distanceB;
+    });
 
     return {
       success: true,
@@ -323,30 +343,4 @@ export class DiscoverService {
   }
 
   // ✅ DISTANCE CALCULATE
-  private calculateDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
-  ) {
-    const R = 6371;
-
-    const dLat = this.deg2rad(lat2 - lat1);
-    const dLon = this.deg2rad(lon2 - lon1);
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.deg2rad(lat1)) *
-        Math.cos(this.deg2rad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
-  }
-
-  private deg2rad(deg: number) {
-    return deg * (Math.PI / 180);
-  }
 }

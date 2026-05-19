@@ -13,6 +13,7 @@ import { HeartAction } from '../heart/heart.entity';
 import { StarAction } from '../star/star.entity';
 import { CrossAction } from '../cross/cross.entity';
 import { UserSettings } from '../user-settings/settings.entity';
+import { UserPreference } from '../user-preference/user-preference.entity';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UserSettings } from '../user-settings/settings.entity';
       // ✅ ADD THIS
       CategoryQuestionOption,
       UserSettings,
+      UserPreference,
     ]),
   ],
 

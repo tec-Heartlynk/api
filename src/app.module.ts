@@ -16,6 +16,7 @@ import { TraitModule } from './modules/admin/trait/trait.module';
 import { FrictionsModule } from './modules/admin/friction/frictions.module';
 import { RepairBonusModule } from './modules/admin/repair-bonus/repair-bonus.module';
 import { ProfileAdminModule } from './modules/admin/profile/profile.module';
+import { VideosAdminModule } from './modules/admin/videos/videos.module';
 
 //Mobile
 import { UsersModule } from './modules/mobile/users/users.module';
@@ -33,6 +34,7 @@ import { StarModule } from './modules/mobile/star/star.module';
 import { CrossModule } from './modules/mobile/cross/cross.module';
 import { DiscoverModule } from './modules/mobile/discover/discover.module';
 import { UserPhotoModule } from './modules/mobile/user-photo/user-photo.module';
+import { VideosModule } from './modules/mobile/videos/videos.module';
 
 @Module({
   imports: [
@@ -80,6 +82,8 @@ import { UserPhotoModule } from './modules/mobile/user-photo/user-photo.module';
     DomainModule,
     TraitModule,
     UserPhotoModule,
+    VideosAdminModule,
+    ProfileModule,
   ],
 })
 export class AppModule {}

@@ -129,19 +129,20 @@ export class UserPhotoService {
           );
         }
 
-        await this.userService.updateStatus(
-          userId,
-          dto.screen_status,
-        );
+        await this.userService.updateStatus(userId, dto.screen_status);
       }
 
       return savedPhoto;
-    } catch (error) {
+    } catch (error: unknown) {
+      let message = 'Failed to create photo';
+
+      if (error instanceof Error) {
+        message = error.message;
+      }
+
       console.log('CREATE PHOTO ERROR:', error);
 
-      throw new InternalServerErrorException(
-        error.message || 'Failed to create photo',
-      );
+      throw new InternalServerErrorException(message);
     }
   }
 
@@ -165,12 +166,16 @@ export class UserPhotoService {
           id: 'DESC',
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      let message = 'Failed to fetch photos';
+
+      if (error instanceof Error) {
+        message = error.message;
+      }
+
       console.log('GET ALL PHOTOS ERROR:', error);
 
-      throw new InternalServerErrorException(
-        error.message || 'Failed to fetch photos',
-      );
+      throw new InternalServerErrorException(message);
     }
   }
 
@@ -241,9 +246,7 @@ export class UserPhotoService {
       // SET PRIMARY IF MISSING
       // =========================
 
-      const hasPrimary = remainingPhotos.some(
-        (item) => item.is_primary,
-      );
+      const hasPrimary = remainingPhotos.some((item) => item.is_primary);
 
       if (!hasPrimary && remainingPhotos.length > 0) {
         const firstPhoto = remainingPhotos[0];
@@ -257,12 +260,16 @@ export class UserPhotoService {
         success: true,
         message: 'Photo deleted successfully',
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      let message = 'Failed to delete photo';
+
+      if (error instanceof Error) {
+        message = error.message;
+      }
+
       console.log('DELETE PHOTO ERROR:', error);
 
-      throw new InternalServerErrorException(
-        error.message || 'Failed to delete photo',
-      );
+      throw new InternalServerErrorException(message);
     }
   }
 }

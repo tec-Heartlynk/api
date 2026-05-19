@@ -53,10 +53,6 @@ export class ProfileAdminService {
         'user.role',
       ])
 
-      .andWhere('user.isActive = :isActive', {
-        isActive: true,
-      })
-
       // ✅ Role Condition
       .andWhere('user.role = :role', {
         role: 'USER',
@@ -107,6 +103,8 @@ export class ProfileAdminService {
 
         .leftJoinAndSelect('user.photos', 'photos')
 
+        .leftJoinAndSelect('user.videos', 'videos')
+
         .leftJoinAndSelect('user.settings', 'settings')
 
         .leftJoinAndSelect('user.preferences', 'preferences')
@@ -153,6 +151,7 @@ export class ProfileAdminService {
         profile.latitude,
         profile.longitude,
         user.photos?.length ? user.photos : null,
+        user.videos?.length ? user.videos : null,
 
         // preferences
         user.preferences?.looking_for,
@@ -225,6 +224,13 @@ export class ProfileAdminService {
           photos: user.photos?.map((item) => ({
             id: item.id,
             photo: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${item.photo}`,
+            is_primary: item.is_primary,
+          })),
+
+          videos: user.videos?.map((item) => ({
+            id: item.id,
+            video_url: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/videos/${item.video_url}`,
+            video_verified: item.video_verified,
           })),
 
           user: {
@@ -550,8 +556,6 @@ export class ProfileAdminService {
 
     // ✅ Save user
     const updatedUser = await this.profileRepo.manager.save(profile.user);
-
-    console.log('Updated User Status:', updatedUser.isActive);
 
     return {
       success: true,

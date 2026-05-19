@@ -14,6 +14,7 @@ import { UserPreference } from '../user-preference/user-preference.entity';
 import { UserPreferenceQuestionAnswer } from '../user-preference-question-answer/user-preference-question-answer.entity';
 import { UserTraitLedger } from '../../mobile/user_trait_ledger/user_trait_ledger.entity';
 import { UserPhoto } from '../user-photo/user-photo.entity';
+import { Videos } from '../videos/videos.entity';
 
 export enum Role {
   USER = 'USER',
@@ -73,4 +74,7 @@ export class User {
 
   @OneToMany(() => UserPhoto, (photo) => photo.user)
   photos!: UserPhoto[];
+
+  @OneToMany(() => Videos, (video) => video.user)
+  videos!: Videos[];
 }

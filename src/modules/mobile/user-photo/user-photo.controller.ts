@@ -35,9 +35,7 @@ import { Profile } from '../profile/profile.entity';
 export class UserPhotoController {
   constructor(private readonly service: UserPhotoService) {}
 
-  // =========================
-  // Upload Photos
-  // =========================
+ 
 
   // =========================
   // Upload Photos
@@ -62,17 +60,19 @@ export class UserPhotoController {
       }),
 
       fileFilter: (req, file, callback) => {
-        const allowedMimeTypes = [
-          'image/jpeg',
-          'image/jpg',
-          'image/png',
-          'image/webp',
-        ];
+       const allowedMimeTypes = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/heif',
+  'image/heic'
+];
 
         if (!allowedMimeTypes.includes(file.mimetype)) {
           return callback(
             new BadRequestException(
-              'Only jpg, jpeg, png and webp images are allowed',
+              'Only heif, heic, jpg, jpeg, png and webp images are allowed',
             ),
             false,
           );
@@ -127,7 +127,7 @@ export class UserPhotoController {
     // DEBUG
     // =========================
 
-    console.log(body);
+    //console.log(body);
 
     // =========================
     // SAVE NEW PHOTOS
@@ -157,14 +157,22 @@ export class UserPhotoController {
     // =========================
 
     return {
-      success: true,
+  success: true,
 
-      message: 'Photos uploaded successfully',
+  message: 'Photos uploaded successfully',
 
-      total_photos: existingPhotos.length + uploadedPhotos.length,
+  total_photos: existingPhotos.length + uploadedPhotos.length,
 
-      data: uploadedPhotos,
-    };
+  data: uploadedPhotos.map((item) => ({
+    id: item.id,
+
+    user_id: item.user_id,
+
+    photo: `${process.env.BASE_URL}/uploads/profile/${item.photo}`,
+
+    is_primary: item.is_primary,
+  })),
+};
   }
 
   // =========================
@@ -191,62 +199,7 @@ export class UserPhotoController {
 
   //Get Photos by User ID (for Profile)
 
-  @UseGuards(JwtAuthGuard)
-  @Put()
-  @UseInterceptors(
-    FilesInterceptor('photo', 6, {
-      storage: diskStorage({
-        destination: './uploads/profile',
 
-        filename: (req, file, cb) => {
-          const uniqueName =
-            Date.now() +
-            '-' +
-            Math.round(Math.random() * 1e9) +
-            extname(file.originalname);
-
-          cb(null, uniqueName);
-        },
-      }),
-
-      fileFilter: (req, file, cb) => {
-        const allowedMimeTypes = [
-          'image/jpeg',
-          'image/jpg',
-          'image/png',
-          'image/webp',
-        ];
-
-        if (!allowedMimeTypes.includes(file.mimetype)) {
-          return cb(
-            new BadRequestException(
-              'Only jpg, jpeg, png and webp images are allowed',
-            ),
-            false,
-          );
-        }
-
-        cb(null, true);
-      },
-
-      limits: {
-        fileSize: 5 * 1024 * 1024,
-        files: 6,
-      },
-    }),
-  )
-  async replaceAllPhotos(
-    @Req() req,
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
-    if (!files || files.length === 0) {
-      throw new BadRequestException('At least one photo is required');
-    }
-
-    const userId = req.user.userId;
-
-    return this.service.replaceAllPhotos(userId, files);
-  }
 
   @UseGuards(JwtAuthGuard)
   @Get('user/:userId')
@@ -279,7 +232,6 @@ export class UserPhotoController {
   @Delete(':id')
   remove(
     @Req() req,
-
     @Param('id', ParseIntPipe)
     id: number,
   ) {

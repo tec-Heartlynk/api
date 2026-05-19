@@ -276,11 +276,12 @@ export class DiscoverService {
           distance_unit: 'km',
 
           // ✅ Photos
-          photos: profile.photos?.map((item) => ({
-            id: item.id,
-            photo: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${item.photo}`,
-            is_primary: item.is_primary,
-          })),
+          photos:
+            profile.user?.photos?.map((item) => ({
+              id: item.id,
+              photo: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${item.photo}`,
+              is_primary: item.is_primary,
+            })) || [],
 
           // ✅ Interests
           interests: interestsData.map((item) => ({

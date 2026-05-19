@@ -1,10 +1,9 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Profile } from './profile.entity';
-import { CreateProfileDto } from './dto/create-profile.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { UsersService } from '../users/users.service';
-import { CrossService } from '../cross/cross.service';
+import { Profile } from '../../mobile/profile/profile.entity';
+
+import { UsersService } from '../../mobile/users/users.service';
+import { CrossService } from '../../mobile/cross/cross.service';
 import {
   Injectable,
   InternalServerErrorException,
@@ -14,10 +13,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
 import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
-import { UserPhotoService } from '../user-photo/user-photo.service';
+import { UserPhotoService } from '../../mobile/user-photo/user-photo.service';
 
 @Injectable()
-export class ProfileService {
+export class ProfileAdminService {
   constructor(
     @InjectRepository(Profile)
     private profileRepo: Repository<Profile>,
@@ -31,46 +30,71 @@ export class ProfileService {
     private readonly quizQuestionRepo: Repository<QuizQuestion>,
   ) {}
 
-  // Create profile for user
-  async create(userId: number, dto: CreateProfileDto) {
-    try {
-      const existing = await this.profileRepo.findOne({
-        where: { user: { id: userId } },
+  // Get All Profiles - with pagination and filters
+
+  async getAllProfiles(page: number, limit: number) {
+    const query = this.profileRepo
+      .createQueryBuilder('profile')
+
+      // ✅ Only User Relation
+      .leftJoinAndSelect('profile.user', 'user')
+
+      // ✅ Selected Columns
+      .select([
+        'profile.id',
+        'profile.name',
+        'profile.dob',
+        'profile.identity',
+        'profile.who_open_meeting',
+
+        'user.id',
+        'user.email',
+        'user.isActive',
+        'user.role',
+      ])
+
+      .andWhere('user.isActive = :isActive', {
+        isActive: true,
+      })
+
+      // ✅ Role Condition
+      .andWhere('user.role = :role', {
+        role: 'USER',
       });
 
-      if (existing) {
-        throw new BadRequestException(
-          'Profile already exists. Please update instead.',
-        );
-      }
+    // ✅ Pagination
+    query.skip((page - 1) * limit).take(limit);
 
-      // ✅ create profile first
-      const profile = this.profileRepo.create({
-        ...dto,
-        user: { id: userId } as any,
-      });
+    // ✅ Latest First
+    query.orderBy('profile.id', 'DESC');
 
-      const savedProfile = await this.profileRepo.save(profile);
+    const [profiles, total] = await query.getManyAndCount();
 
-      // ✅ update screen status
-      if (dto.screen_status !== undefined) {
-        await this.userService.updateStatus(userId, dto.screen_status);
-      }
+    // ✅ Response
+    const data = profiles.map((profile) => ({
+      user_id: profile.user?.id,
+      profile_id: profile.id,
 
-      return {
-        success: true,
-        message: 'Profile created successfully',
-        data: savedProfile,
-      };
-    } catch (error) {
-      console.log(error);
+      name: profile.name,
 
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
+      email: profile.user?.email,
 
-      throw new InternalServerErrorException('Failed to create profile');
-    }
+      dob: profile.dob,
+
+      identity: profile.identity,
+
+      who_open_meeting: profile.who_open_meeting,
+
+      isActive: profile.user?.isActive,
+    }));
+
+    return {
+      success: true,
+      total,
+      page,
+      limit,
+      data,
+    };
   }
 
   //Get profile detail
@@ -500,5 +524,44 @@ export class ProfileService {
     }
   }
 
-  //Update profile
+  //Update user status (activate/deactivate)
+
+  // ✅ SERVICE
+
+  async updateUserStatus(userId: number, isActive: boolean | string) {
+    const profile = await this.profileRepo.findOne({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+      relations: ['user'],
+    });
+
+    if (!profile || !profile.user) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    // ✅ Convert string/boolean properly
+    const status = isActive === true || isActive === 'true';
+
+    // ✅ Update
+    profile.user.isActive = status;
+
+    // ✅ Save user
+    const updatedUser = await this.profileRepo.manager.save(profile.user);
+
+    console.log('Updated User Status:', updatedUser.isActive);
+
+    return {
+      success: true,
+      data: {
+        user_id: updatedUser.id,
+        isActive: updatedUser.isActive,
+      },
+      message: `User ${
+        updatedUser.isActive ? 'Activated' : 'Deactivated'
+      } Successfully`,
+    };
+  }
 }

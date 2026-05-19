@@ -15,6 +15,7 @@ import { DomainModule } from './modules/admin/domain/domain.module';
 import { TraitModule } from './modules/admin/trait/trait.module';
 import { FrictionsModule } from './modules/admin/friction/frictions.module';
 import { RepairBonusModule } from './modules/admin/repair-bonus/repair-bonus.module';
+import { ProfileAdminModule } from './modules/admin/profile/profile.module';
 
 //Mobile
 import { UsersModule } from './modules/mobile/users/users.module';
@@ -60,7 +61,7 @@ import { UserPhotoModule } from './modules/mobile/user-photo/user-photo.module';
     FrictionsModule,
     ScheduleModule.forRoot(),
     RepairBonusModule,
-    ProfileModule,
+    ProfileAdminModule,
     OptionModule,
     OptionCategoryModule,
     AdminOptionCategoryModule,

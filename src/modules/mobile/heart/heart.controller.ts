@@ -28,6 +28,11 @@ export class HeartController {
     return this.heartService.getheartdetails(req.user.userId);
   }
 
+  @Get('new-likes')
+  async getheartnewlikes(@Req() req) {
+    return this.heartService.getheartnewlikes(req.user.userId);
+  }
+
   @Delete()
   async delete(@Req() req, @Param('id') to_user_id: number) {
     const userId = req.user.userId;

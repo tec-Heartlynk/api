@@ -29,22 +29,30 @@ export class UserPreferenceService {
 
   // ✅ CREATE or UPDATE (UPSERT)
   async create(user_id: number, dto: CreateUserPreferenceDto) {
-    const existing = await this.repo.findOne({ where: { user_id } });
+    // ✅ remove screen_status from dto
+    const { screen_status, ...preferenceData } = dto;
+
+    const existing = await this.repo.findOne({
+      where: { user_id },
+    });
 
     if (existing) {
-      await this.repo.update({ user_id }, dto);
+      // ✅ only update preference fields
+      await this.repo.update({ user_id }, preferenceData);
+
       return this.findByUser(user_id);
     }
 
     const data = this.repo.create({
-      ...dto,
+      ...preferenceData,
       user_id,
     });
 
     const saved = await this.repo.save(data);
 
-    if (dto.screen_status !== undefined) {
-      await this.userService.updateStatus(user_id, dto.screen_status);
+    // ✅ update users table
+    if (screen_status !== undefined) {
+      await this.userService.updateStatus(user_id, screen_status);
     }
 
     return saved;

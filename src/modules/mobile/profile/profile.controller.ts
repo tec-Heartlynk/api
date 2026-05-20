@@ -9,6 +9,7 @@ import {
   UploadedFiles,
   UseInterceptors,
   ParseIntPipe,
+  Param,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -43,6 +44,15 @@ export class ProfileController {
   @Get('getprofile-status')
   getMyProfileStatus(@Req() req) {
     return this.profileService.findByUserIdprofileStatus(req.user.userId);
+  }
+
+  // ✅ GET PROFILE STATUS
+  @Get('get-single-profile/:id')
+  getSingleProfile(
+    @Param('id', ParseIntPipe)
+    id: number,
+  ) {
+    return this.profileService.findByUserIdprofile(id);
   }
 
   // ✅ UPDATE PROFILE (without image)

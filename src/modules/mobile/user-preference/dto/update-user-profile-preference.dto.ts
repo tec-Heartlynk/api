@@ -8,6 +8,7 @@ import {
   IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { optional } from 'joi';
 
 export class UpdateUserAboutPreferenceDto {
   @IsOptional()
@@ -50,7 +51,7 @@ export class UpdateUserAboutPreferenceDto {
   @IsNumber()
   education?: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsArray()
   language?: number[];
 

@@ -9,18 +9,25 @@ import { Repository } from 'typeorm';
 
 import { HeartAction } from './heart.entity';
 import { HeartDto } from './dto/heart.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class HeartService {
   constructor(
     @InjectRepository(HeartAction)
     private readonly heartRepo: Repository<HeartAction>,
+    private userService: UsersService,
   ) {}
 
   // CREATE HEART
   async create(userId: number, dto: HeartDto) {
     if (userId === dto.to_user_id) {
       throw new BadRequestException('You cannot heart yourself');
+    }
+
+    const existing = await this.userService.findById(dto.to_user_id);
+    if (!existing) {
+      throw new BadRequestException('User not found');
     }
 
     const alreadyExist = await this.heartRepo.findOne({
@@ -50,14 +57,58 @@ export class HeartService {
 
   // HISTORY
   async getheartdetails(userId: number) {
-    const data = await this.heartRepo.find({
-      where: {
-        from_user_id: userId,
-      },
-      order: {
-        id: 'DESC',
-      },
-    });
+    const data = await this.heartRepo
+      .createQueryBuilder('heart')
+
+      .leftJoin(
+        'profiles', // table name
+        'profile', // alias
+        'profile.user_id = heart.to_user_id',
+      )
+
+      .select([
+        'heart.id AS id',
+        'heart.from_user_id AS from_user_id',
+        'heart.to_user_id AS to_user_id',
+        'profile.name AS profile_name',
+        'profile.id AS profile_id',
+      ])
+
+      .where('heart.from_user_id = :userId', { userId })
+
+      .orderBy('heart.id', 'DESC')
+
+      .getRawMany();
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  async getheartnewlikes(userId: number) {
+    const data = await this.heartRepo
+      .createQueryBuilder('heart')
+
+      .leftJoin(
+        'profiles', // table name
+        'profile', // alias
+        'profile.user_id = heart.to_user_id',
+      )
+
+      .select([
+        'heart.id AS id',
+        'heart.from_user_id AS from_user_id',
+        'heart.to_user_id AS to_user_id',
+        'profile.name AS profile_name',
+        'profile.id AS profile_id',
+      ])
+
+      .where('heart.to_user_id = :userId', { userId })
+
+      .orderBy('heart.id', 'DESC')
+
+      .getRawMany();
 
     return {
       success: true,

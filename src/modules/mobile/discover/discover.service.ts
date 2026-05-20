@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Not } from 'typeorm';
+import { Repository, In, Not, MoreThan } from 'typeorm';
 import {
   calculateAge,
   calculateDistance,
 } from '../../../common/function/common-function';
+import { ConfigService } from '@nestjs/config';
 
 import { Profile } from '../profile/profile.entity';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
@@ -12,6 +13,7 @@ import { HeartAction } from '../heart/heart.entity';
 import { StarAction } from '../star/star.entity';
 import { CrossAction } from '../cross/cross.entity';
 import { UserPreference } from '../user-preference/user-preference.entity';
+import { DailyProfileView } from './daily-profile-view.entity';
 
 @Injectable()
 export class DiscoverService {
@@ -32,6 +34,10 @@ export class DiscoverService {
     private readonly crossRepo: Repository<CrossAction>,
     @InjectRepository(UserPreference)
     private readonly userPreferenceRepo: Repository<UserPreference>,
+
+    @InjectRepository(DailyProfileView)
+    private readonly dailyProfileViewRepo: Repository<DailyProfileView>,
+    private readonly configService: ConfigService,
   ) {}
 
   // ✅ GET ALL PROFILE WITH DISTANCE
@@ -70,6 +76,7 @@ export class DiscoverService {
         user_id: userId,
       },
     });
+
     const myInterests = userPreferenceData?.interests || [];
 
     // ✅ Get Crossed Users
@@ -83,6 +90,39 @@ export class DiscoverService {
     const crossedUserIds = crossedUsers.map((item) => item.to_user_id);
     // ✅ Current User Cross Count
     const crossedCount = crossedUsers.length;
+
+    // ✅ DAILY FREE LIMIT
+    const DAILY_FREE_LIMIT = Number(
+      this.configService.get<string>('DAILY_FREE_LIMIT') || 10,
+    );
+
+    // ✅ Last 24 Hours
+    const last24Hours = new Date();
+    last24Hours.setHours(last24Hours.getHours() - 24);
+
+    // ✅ Today crossed count
+    const todayCrossCount = await this.crossRepo.count({
+      where: {
+        from_user_id: userId,
+        createdAt: MoreThan(last24Hours),
+      },
+    });
+
+    // ✅ Remaining limit
+    const remainingLimit = DAILY_FREE_LIMIT - todayCrossCount;
+
+    // ✅ limit reached
+    if (remainingLimit <= 0) {
+      return {
+        success: true,
+        total: 0,
+        page,
+        limit,
+        crossed_count: crossedCount,
+        message: 'Daily free profile limit reached',
+        data: [],
+      };
+    }
 
     // ✅ Get Profiles
     const query = this.profileRepo
@@ -198,8 +238,20 @@ export class DiscoverService {
       );
     }
 
+    //Add LookingFor Filter
+    const LookingFor = Number(userPreferenceData?.looking_for);
+
+    if (LookingFor) {
+      query.andWhere('userPreferences.looking_for = :LookingFor', {
+        LookingFor,
+      });
+    }
+
     // ✅ Pagination
-    query.skip((page - 1) * limit).take(limit);
+    // ✅ Final Limit
+    const finalLimit = Math.min(limit, remainingLimit);
+
+    query.skip((page - 1) * finalLimit).take(finalLimit);
 
     const [profiles, totalProfiles] = await query.getManyAndCount();
 
@@ -334,10 +386,19 @@ export class DiscoverService {
 
     return {
       success: true,
+
       total: totalProfiles,
+
       page,
-      limit,
+
+      daily_limit: DAILY_FREE_LIMIT,
+
+      used_limit: todayCrossCount,
+
+      remaining_limit: remainingLimit,
+
       crossed_count: crossedCount,
+
       data,
     };
   }

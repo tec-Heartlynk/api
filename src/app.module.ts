@@ -84,6 +84,7 @@ import { VideosModule } from './modules/mobile/videos/videos.module';
     UserPhotoModule,
     VideosAdminModule,
     ProfileModule,
+    VideosModule,
   ],
 })
 export class AppModule {}

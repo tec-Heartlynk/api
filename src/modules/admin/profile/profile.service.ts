@@ -10,6 +10,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { calculateAge } from '../../../common/function/common-function';
 import { ConfigService } from '@nestjs/config';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
 import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
@@ -184,22 +185,10 @@ export class ProfileAdminService {
 
       // end of profile completion calculation
 
+      // ✅ Age Calculate
       let age: number | null = null;
-
       if (profile.dob) {
-        const today = new Date();
-        const birthDate = new Date(profile.dob);
-
-        age = today.getFullYear() - birthDate.getFullYear();
-
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-
-        if (
-          monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < birthDate.getDate())
-        ) {
-          age--;
-        }
+        age = calculateAge(profile.dob);
       }
 
       return {

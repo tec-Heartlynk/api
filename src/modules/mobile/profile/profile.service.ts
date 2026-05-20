@@ -11,6 +11,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+
+import { calculateAge } from '../../../common/function/common-function';
 import { ConfigService } from '@nestjs/config';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
 import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
@@ -161,22 +163,10 @@ export class ProfileService {
 
       // end of profile completion calculation
 
+      // ✅ Age Calculate
       let age: number | null = null;
-
       if (profile.dob) {
-        const today = new Date();
-        const birthDate = new Date(profile.dob);
-
-        age = today.getFullYear() - birthDate.getFullYear();
-
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-
-        if (
-          monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < birthDate.getDate())
-        ) {
-          age--;
-        }
+        age = calculateAge(profile.dob);
       }
 
       return {
@@ -210,6 +200,9 @@ export class ProfileService {
             isActive: user.isActive,
             isBlocked: user.isBlocked,
             status: user.status,
+            createdAt: user.createdAt
+              ? new Date(user.createdAt).toISOString().split('T')[0]
+              : null,
 
             settings: user.settings,
 
@@ -261,6 +254,39 @@ export class ProfileService {
                     id,
                     title: optionMap[id],
                   })),
+                  open_to_children: {
+                    id: user.preferences.open_to_children,
+                    title: optionMap[user.preferences.open_to_children],
+                  },
+                  pets: {
+                    id: user.preferences.pets,
+                    title: optionMap[user.preferences.pets],
+                  },
+                  drinking: {
+                    id: user.preferences.drinking,
+                    title: optionMap[user.preferences.drinking],
+                  },
+
+                  smoking: {
+                    id: user.preferences.smoking,
+                    title: optionMap[user.preferences.smoking],
+                  },
+                  diet: {
+                    id: user.preferences.diet,
+                    title: optionMap[user.preferences.diet],
+                  },
+                  fitness_level: {
+                    id: user.preferences.fitness_level,
+                    title: optionMap[user.preferences.fitness_level],
+                  },
+                  travel_habits: {
+                    id: user.preferences.travel_habits,
+                    title: optionMap[user.preferences.travel_habits],
+                  },
+                  work_life: {
+                    id: user.preferences.work_life,
+                    title: optionMap[user.preferences.work_life],
+                  },
                 }
               : null,
 
@@ -290,7 +316,6 @@ export class ProfileService {
     }
   }
 
-  //Get profile detail
   async findByUserIdprofileStatus(userId: number) {
     try {
       const profile = await this.profileRepo
@@ -499,6 +524,4 @@ export class ProfileService {
       throw error;
     }
   }
-
-  //Update profile
 }

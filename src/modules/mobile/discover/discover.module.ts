@@ -1,32 +1,28 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { DiscoverController } from './discover.controller';
 import { DiscoverService } from './discover.service';
+import { DiscoverController } from './discover.controller';
 
 import { Profile } from '../profile/profile.entity';
-
-// ✅ IMPORT ENTITY
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
-
 import { HeartAction } from '../heart/heart.entity';
 import { StarAction } from '../star/star.entity';
 import { CrossAction } from '../cross/cross.entity';
-import { UserSettings } from '../user-settings/settings.entity';
 import { UserPreference } from '../user-preference/user-preference.entity';
+
+import { DailyProfileView } from './daily-profile-view.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Profile,
+      CategoryQuestionOption,
       HeartAction,
       StarAction,
       CrossAction,
-
-      // ✅ ADD THIS
-      CategoryQuestionOption,
-      UserSettings,
       UserPreference,
+      DailyProfileView,
     ]),
   ],
 

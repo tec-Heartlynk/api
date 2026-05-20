@@ -5,16 +5,17 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 
-@Entity('cross')
-export class CrossAction {
+@Entity('daily_profile_views')
+export class DailyProfileView {
   @PrimaryGeneratedColumn()
   id!: number;
 
   @Column()
-  from_user_id!: number;
+  user_id!: number;
 
   @Column()
-  to_user_id!: number;
+  profile_user_id!: number;
+
   @CreateDateColumn()
-  createdAt!: Date;
+  created_at!: Date;
 }

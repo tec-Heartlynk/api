@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 
 import { StarAction } from './star.entity';
 import { StarDto } from './dto/star.dto';
+import { calculateAge } from '../../../common/function/common-function';
 
 @Injectable()
 export class StarService {
@@ -38,18 +39,53 @@ export class StarService {
 
   // HISTORY
   async getstardetails(userId: number) {
-    const data = await this.starRepo.find({
-      where: {
-        from_user_id: userId,
-      },
-      order: {
-        id: 'DESC',
-      },
+    const data = await this.starRepo
+      .createQueryBuilder('star')
+
+      .leftJoinAndSelect('star.toUser', 'toUser')
+
+      .leftJoinAndSelect('toUser.profile', 'profile')
+
+      .leftJoinAndSelect('toUser.photos', 'photos')
+
+      .where('star.from_user_id = :userId', { userId })
+
+      .orderBy('star.id', 'DESC')
+
+      .getMany();
+
+    const formattedData = data.map((item) => {
+      const profile = item.toUser?.profile;
+
+      // age calculate
+      let age: number | null = null;
+
+      if (profile?.dob) {
+        age = calculateAge(profile.dob);
+      }
+
+      // profile photo
+      const photo =
+        item.toUser?.photos?.find((p) => p.is_primary === true)?.photo || null;
+
+      // full image path
+      const profile_photo = photo
+        ? `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${photo}`
+        : null;
+
+      return {
+        user_id: item.to_user_id,
+        name: profile?.name || null,
+        age,
+        profile_photo,
+        compatibility_score: '23',
+        short_compatibility_insight: '50',
+      };
     });
 
     return {
       success: true,
-      data,
+      data: formattedData,
     };
   }
 

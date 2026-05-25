@@ -46,6 +46,7 @@ export class ProfileAdminService {
         'profile.name',
         'profile.dob',
         'profile.identity',
+        'profile.self_describe',
         'profile.who_open_meeting',
 
         'user.id',
@@ -79,6 +80,8 @@ export class ProfileAdminService {
       dob: profile.dob,
 
       identity: profile.identity,
+
+      self_describe: profile.self_describe || '',
 
       who_open_meeting: profile.who_open_meeting,
 

@@ -15,6 +15,7 @@ import { UserPreferenceQuestionAnswer } from '../user-preference-question-answer
 import { UserTraitLedger } from '../../mobile/user_trait_ledger/user_trait_ledger.entity';
 import { UserPhoto } from '../user-photo/user-photo.entity';
 import { Videos } from '../videos/videos.entity';
+import { StarAction } from '../star/star.entity';
 
 export enum Role {
   USER = 'USER',
@@ -77,4 +78,12 @@ export class User {
 
   @OneToMany(() => Videos, (video) => video.user)
   videos!: Videos[];
+
+  // user.entity.ts
+
+  @OneToMany(() => StarAction, (star) => star.fromUser)
+  sentStars!: StarAction[];
+
+  @OneToMany(() => StarAction, (star) => star.toUser)
+  receivedStars!: StarAction[];
 }

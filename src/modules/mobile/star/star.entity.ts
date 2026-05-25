@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
+import { User } from '../users/user.entity';
 
 @Entity('star')
 export class StarAction {
@@ -10,4 +17,13 @@ export class StarAction {
 
   @Column()
   to_user_id!: number;
+
+  // Star Entity
+  @ManyToOne(() => User, (user) => user.sentStars)
+  @JoinColumn({ name: 'from_user_id' })
+  fromUser!: User;
+
+  @ManyToOne(() => User, (user) => user.receivedStars)
+  @JoinColumn({ name: 'to_user_id' })
+  toUser!: User;
 }

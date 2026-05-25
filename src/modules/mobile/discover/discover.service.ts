@@ -142,7 +142,7 @@ export class DiscoverService {
       .andWhere('user.isActive = :isActive', {
         isActive: true,
       })
-      .andWhere('user.status = 8');
+      .andWhere('user.status = 10');
 
     // ✅ Dynamic Age Filter
     if (minAge && maxAge) {
@@ -181,7 +181,7 @@ export class DiscoverService {
     if (maxDistance !== undefined && maxDistance !== null) {
       const distanceLimit = Number(maxDistance); // dynamic input (10, 30, 50...)
 
-      query.andWhere(
+      query.orWhere(
         `
     profile.latitude IS NOT NULL
     AND profile.longitude IS NOT NULL
@@ -312,14 +312,52 @@ export class DiscoverService {
           },
         });
 
+        //Discover Screen Text
+
+        const compatibilityMessages = {
+          emotional_relational_style:
+            'You both seem to value emotional consistency and mutual understanding.',
+
+          cognitive_decision_style:
+            'You appear to approach decisions in a similar, thoughtful way.',
+
+          values_intimacy_relationship_intent:
+            'You seem aligned on the kind of connection you’re looking for.',
+
+          lifestyle_daily_rhythm:
+            'Your everyday lifestyle patterns appear naturally compatible.',
+
+          communication_style:
+            'You may communicate in ways that feel clear and comfortable to each other.',
+
+          independence_togetherness:
+            'You share a similar balance between closeness and personal space.',
+        };
+
+        // Get all keys
+        const keys = Object.keys(compatibilityMessages);
+
+        // Random key
+        const randomKey = keys[Math.floor(Math.random() * keys.length)];
+
+        // Random value
+        const randomValue = compatibilityMessages[randomKey];
+
+        console.log({
+          key: randomKey,
+          value: randomValue,
+        });
+
         return {
           id: profile.id,
 
           full_name: profile.name,
 
-          bio: profile.self_describe || '',
+          discover_text: randomValue,
 
           identity: profile.identity,
+
+          self_describe: profile.self_describe || '',
 
           dob: profile.dob,
 

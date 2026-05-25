@@ -126,6 +126,7 @@ export class ProfileService {
         profile.name,
         profile.dob,
         profile.identity,
+        profile.self_describe,
         profile.who_open_meeting,
         profile.location,
         profile.latitude,
@@ -344,13 +345,40 @@ export class ProfileService {
       }
 
       const user = profile.user;
+
       if (!user) {
         throw new InternalServerErrorException(
           'Profile user relation is missing',
         );
       }
 
-      // option mapping
+      // =========================
+      // COMMON VALIDATOR
+      // =========================
+
+      const isValidField = (field: any): boolean => {
+        // null / undefined
+        if (field === null || field === undefined) {
+          return false;
+        }
+
+        // string
+        if (typeof field === 'string') {
+          return field.trim() !== '' && field.trim().toLowerCase() !== 'null';
+        }
+
+        // array
+        if (Array.isArray(field)) {
+          return field.length > 0;
+        }
+
+        return true;
+      };
+
+      // =========================
+      // OPTION MAPPING
+      // =========================
+
       const options = await this.categoryquestionoptionRepo.find();
 
       const optionMap = {};
@@ -360,10 +388,9 @@ export class ProfileService {
       });
 
       // =========================
-      // PROFILE SECTION STATUS
+      // PROFILE COMPLETION
       // =========================
 
-      // profile completion calculation
       const profileFields = [
         profile.name,
         profile.dob,
@@ -372,18 +399,20 @@ export class ProfileService {
         profile.location,
         profile.latitude,
         profile.longitude,
+
+        // photos
         user.photos?.length ? user.photos : null,
 
         // preferences
         user.preferences?.looking_for,
         user.preferences?.feel,
-        user.preferences?.interests?.length ? user.preferences.interests : null,
+        user.preferences?.interests,
         user.preferences?.height,
         user.preferences?.occupation,
         user.preferences?.religion,
         user.preferences?.ethnicity,
         user.preferences?.education,
-        user.preferences?.language?.length ? user.preferences.language : null,
+        user.preferences?.language,
         user.preferences?.political_learning,
         user.preferences?.open_to_children,
         user.preferences?.pets,
@@ -395,31 +424,33 @@ export class ProfileService {
         user.preferences?.work_life,
       ];
 
-      const filledFields = profileFields.filter(
-        (field) => field !== null && field !== undefined && field !== '',
-      ).length;
+      const filledFields = profileFields.filter(isValidField).length;
 
       const profileCompletion = Math.round(
         (filledFields / profileFields.length) * 100,
       );
 
-      // 1. Photos
-      const photosStatus =
-        user.photos && user.photos.length == 6 ? 'Completed' : 'Pending';
+      // =========================
+      // 1. PHOTOS
+      // =========================
 
-      // 2. About You
+      const photosStatus =
+        user.photos && user.photos.length === 6 ? 'Completed' : 'Pending';
+
+      // =========================
+      // 2. ABOUT YOU
+      // =========================
+
       const aboutYouFields = [
         profile.name,
         profile.dob,
         profile.identity,
-        profile.self_describe,
         profile.who_open_meeting,
+
         user.preferences?.height,
         user.preferences?.occupation,
         user.preferences?.religion,
         user.preferences?.ethnicity,
-        user.preferences?.education,
-        user.preferences?.language?.length ? user.preferences.language : null,
         user.preferences?.political_learning,
         user.preferences?.open_to_children,
         user.preferences?.pets,
@@ -428,49 +459,48 @@ export class ProfileService {
         user.preferences?.diet,
       ];
 
-      const aboutYouStatus = aboutYouFields.every(
-        (field) => field !== null && field !== undefined && field !== '',
-      )
+      const aboutYouStatus = aboutYouFields.every(isValidField)
         ? 'Completed'
         : 'Pending';
 
-      // 3. Relationship Goals
+      // =========================
+      // 3. RELATIONSHIP GOALS
+      // =========================
+
       const relationshipGoalsFields = [
         user.preferences?.looking_for,
         user.preferences?.feel,
       ];
 
       const relationshipGoalsStatus = relationshipGoalsFields.every(
-        (field) =>
-          field !== null && field !== undefined && String(field).trim() !== '',
+        isValidField,
       )
         ? 'Completed'
         : 'Pending';
 
-      // 4. Interests & Lifestyle
+      // =========================
+      // 4. INTERESTS & LIFESTYLE
+      // =========================
+
       const interestLifestyleFields = [
-        user.preferences?.interests?.length ? user.preferences.interests : null,
+        user.preferences?.interests,
         user.preferences?.fitness_level,
         user.preferences?.travel_habits,
         user.preferences?.work_life,
       ];
 
-      const interestLifestyleStatus = interestLifestyleFields.some((field) => {
-        if (Array.isArray(field)) {
-          return field.length > 0;
-        }
-
-        return field !== null && field !== undefined;
-      })
+      const interestLifestyleStatus = interestLifestyleFields.every(
+        isValidField,
+      )
         ? 'Completed'
         : 'Pending';
 
-      // 5. Compatibility Answers
+      // =========================
+      // 5. COMPATIBILITY ANSWERS
+      // =========================
 
-      // total questions count
       const totalQuestions = await this.quizQuestionRepo.count();
 
-      // user answered count
       const totalAnswered = user.preferenceAnswers?.length || 0;
 
       const compatibilityAnswersStatus =
@@ -479,16 +509,8 @@ export class ProfileService {
           : 'Pending';
 
       // =========================
-      // PROFILE COMPLETION
+      // RESPONSE
       // =========================
-
-      const sections = [
-        photosStatus,
-        aboutYouStatus,
-        relationshipGoalsStatus,
-        interestLifestyleStatus,
-        compatibilityAnswersStatus,
-      ];
 
       return {
         success: true,

@@ -7,6 +7,7 @@ import {
   UseGuards,
   Delete,
   Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 import { StarService } from './star.service';
@@ -25,8 +26,11 @@ export class StarController {
   async getstardetails(@Req() req) {
     return this.starService.getstardetails(req.user.userId);
   }
-  @Delete()
-  async delete(@Req() req, @Param('id') to_user_id: number) {
+  @Delete(':to_user_id')
+  async delete(
+    @Req() req,
+    @Param('to_user_id', ParseIntPipe) to_user_id: number,
+  ) {
     const userId = req.user.userId;
 
     return this.starService.delete(userId, to_user_id);

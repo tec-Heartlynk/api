@@ -11,6 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from '../../jwt/strategies/jwt.strategy';
 import { BlacklistModule } from '../../blacklist/blacklist.module';
 import { UserPreferenceModule } from '../user-preference/user-preference.module';
+import { SuspensionModule } from '../suspension-user/suspension.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserPreferenceModule } from '../user-preference/user-preference.module'
 
     // 👇 ✅ ADD HERE
     UserPreferenceModule,
+    SuspensionModule,
 
     JwtModule.registerAsync({
       imports: [ConfigModule],

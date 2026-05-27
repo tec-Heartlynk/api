@@ -21,6 +21,7 @@ import { log } from 'node:console';
 import { preferences } from 'joi';
 import { find } from 'rxjs';
 import { UserPreferenceService } from '../user-preference/user-preference.service';
+import { SuspensionService } from '../suspension-user/suspension.service';
 
 import { Inject, forwardRef } from '@nestjs/common';
 
@@ -35,6 +36,7 @@ export class AuthService {
     @InjectRepository(Otp)
     private otpRepo: Repository<Otp>,
     private blacklistService: BlacklistService, // 👈 ADD
+    private readonly suspensionService: SuspensionService,
 
     // 🔥 HERE IS THE FIX
     @Inject(forwardRef(() => UserPreferenceService))

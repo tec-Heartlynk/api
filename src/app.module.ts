@@ -4,6 +4,10 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
+
+import { JwtAuthGuard } from './modules/jwt/strategies/jwt-auth.guard';
+import { SuspensionGuard } from './common/guards/suspension.guard';
 
 //Admin
 import { EmployeeModule } from './modules/admin/employee/employee.module';
@@ -17,6 +21,10 @@ import { FrictionsModule } from './modules/admin/friction/frictions.module';
 import { RepairBonusModule } from './modules/admin/repair-bonus/repair-bonus.module';
 import { ProfileAdminModule } from './modules/admin/profile/profile.module';
 import { VideosAdminModule } from './modules/admin/videos/videos.module';
+import { ReportAdminUserModule } from './modules/admin/report-user/report-user.module';
+import { PagesAdminModule } from './modules/admin/pages/pages.module';
+import { SuspensionAdminModule } from './modules/admin/suspension-user/suspension.module';
+import { BlockAdminModule } from './modules/admin/block-user/block.module';
 
 //Mobile
 import { UsersModule } from './modules/mobile/users/users.module';
@@ -35,6 +43,10 @@ import { CrossModule } from './modules/mobile/cross/cross.module';
 import { DiscoverModule } from './modules/mobile/discover/discover.module';
 import { UserPhotoModule } from './modules/mobile/user-photo/user-photo.module';
 import { VideosModule } from './modules/mobile/videos/videos.module';
+import { ReportUserModule } from './modules/mobile/report-user/report-user.module';
+import { PagesModule } from './modules/mobile/pages/pages.module';
+import { BlockModule } from './modules/mobile/block-user/block.module';
+import { SuspensionModule } from './modules/mobile/suspension-user/suspension.module';
 
 @Module({
   imports: [
@@ -59,6 +71,7 @@ import { VideosModule } from './modules/mobile/videos/videos.module';
 
     AuthModule,
     UsersModule,
+    SuspensionModule,
     EmployeeModule,
     FrictionsModule,
     ScheduleModule.forRoot(),
@@ -85,6 +98,24 @@ import { VideosModule } from './modules/mobile/videos/videos.module';
     VideosAdminModule,
     ProfileModule,
     VideosModule,
+    ReportUserModule,
+    ReportAdminUserModule,
+    PagesAdminModule,
+    PagesModule,
+    BlockModule,
+    SuspensionAdminModule,
+    BlockAdminModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+
+    {
+      provide: APP_GUARD,
+      useClass: SuspensionGuard,
+    },
   ],
 })
 export class AppModule {}

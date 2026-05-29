@@ -61,32 +61,30 @@ export class EmployeesService {
   // 🔐 LOGIN EMPLOYEE
   async login(email: string, password: string) {
     try {
-      console.log('🔐 LOGIN ATTEMPT:', { email, passwordLength: password?.length });
-      
       if (!email || !password) {
         throw new UnauthorizedException('Email and password are required');
       }
 
       const employee = await this.findByEmail(email);
+
       if (!employee) {
-        console.log('❌ Employee not found:', email);
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      console.log('✅ Employee found:', { id: employee.id, email: employee.email });
-
       if (!employee.isActive || employee.isBlocked) {
-        console.log('❌ Account inactive/blocked:', { isActive: employee.isActive, isBlocked: employee.isBlocked });
         throw new UnauthorizedException('Account is inactive or blocked');
       }
 
       const isPasswordValid = await bcrypt.compare(password, employee.password);
+
       if (!isPasswordValid) {
-        console.log('❌ Password mismatch for:', email);
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      console.log('✅ Password valid, generating token');
+      // ✅ UPDATE LAST LOGIN
+      employee.last_login = new Date();
+
+      await this.employeeRepo.save(employee);
 
       const token = this.jwtService.sign({
         id: employee.id,
@@ -102,13 +100,83 @@ export class EmployeesService {
           name: employee.name,
           email: employee.email,
           role: employee.role,
+          last_login: employee.last_login,
         },
         token,
       };
     } catch (error) {
-      console.error('❌ LOGIN ERROR:', error?.message || error);
-      if (error instanceof UnauthorizedException) throw error;
-      throw new InternalServerErrorException('Login failed: ' + (error?.message || 'Unknown error'));
+      throw error;
     }
+  }
+
+  // ✅ GET ALL ADMINS
+  async getAllAdmins() {
+    return this.employeeRepo.find({
+      order: {
+        id: 'DESC',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        isBlocked: true,
+        last_login: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  // ✅ GET SINGLE ADMIN
+  async getAdmin(id: number) {
+    const admin = await this.employeeRepo.findOne({
+      where: { id },
+    });
+
+    if (!admin) {
+      throw new BadRequestException('Admin not found');
+    }
+
+    return admin;
+  }
+
+  // ✅ UPDATE ADMIN
+  async updateAdmin(id: number, dto: Partial<CreateEmployeeDto>) {
+    const admin = await this.getAdmin(id);
+
+    if (dto.password) {
+      dto.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    Object.assign(admin, dto);
+
+    return this.employeeRepo.save(admin);
+  }
+
+  // ✅ DELETE ADMIN
+  async deleteAdmin(id: number) {
+    const admin = await this.getAdmin(id);
+
+    await this.employeeRepo.remove(admin);
+
+    return {
+      success: true,
+      message: 'Admin deleted successfully',
+    };
+  }
+
+  // ✅ BLOCK/UNBLOCK ADMIN
+  async toggleBlock(id: number) {
+    const admin = await this.getAdmin(id);
+
+    admin.isBlocked = !admin.isBlocked;
+
+    await this.employeeRepo.save(admin);
+
+    return {
+      success: true,
+      isBlocked: admin.isBlocked,
+    };
   }
 }

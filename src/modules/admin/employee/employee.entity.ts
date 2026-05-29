@@ -4,14 +4,13 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
-  OneToMany,
 } from 'typeorm';
 
-
 export enum Role {
-  SUPERADMIN = 'SUPERADMIN',
-  ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  SAFETY_ADMIN = 'SAFETY_ADMIN',
+  SUPPORT_ADMIN = 'SUPPORT_ADMIN',
+  MARKETING_ADMIN = 'MARKETING_ADMIN',
 }
 
 @Entity('employees')
@@ -19,19 +18,19 @@ export class Employee {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false })
+  @Column()
   name!: string;
 
   @Column({ unique: true })
   email!: string;
 
-  @Column({ nullable: false })
+  @Column()
   password!: string;
 
   @Column({
     type: 'enum',
     enum: Role,
-    default: Role.ADMIN,
+    default: Role.SUPPORT_ADMIN,
   })
   role!: Role;
 
@@ -41,11 +40,16 @@ export class Employee {
   @Column({ default: false })
   isBlocked!: boolean;
 
-  // 📅 TIMESTAMPS
+  // ✅ LAST LOGIN
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+  })
+  last_login!: Date;
+
   @CreateDateColumn()
   createdAt!: Date;
 
   @UpdateDateColumn()
   updatedAt!: Date;
-
 }

@@ -21,7 +21,5 @@ export class CreateEmployeeDto {
   password!: string;
 
   @IsEnum(Role)
-  role: Role = Role.ADMIN; // default ADMIN
-
-
+  role: Role = Role.SUPPORT_ADMIN; // default ADMIN
 }

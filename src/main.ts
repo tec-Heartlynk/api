@@ -46,6 +46,8 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  console.log(process.env.PORT);
+
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap();

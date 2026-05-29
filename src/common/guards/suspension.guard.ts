@@ -20,6 +20,8 @@ export class SuspensionGuard implements CanActivate {
       '/mobile/auth/verify-otp',
       '/mobile/auth/login',
       '/mobile/auth/register',
+
+      '/admin/employee/login',
     ];
 
     if (publicRoutes.some((route) => request.url.includes(route))) {

@@ -304,8 +304,8 @@ export class SuspensionService {
 
     const suspensions = await this.suspensionRepo.find({
       relations: ['user', 'user.profile'],
-
       order: {
+        status: 'ASC',
         id: 'DESC',
       },
     });
@@ -344,15 +344,12 @@ export class SuspensionService {
 
       return {
         suspension_id: suspension.id,
-
         user_id: suspension.user_id,
-
         name: suspension.user?.profile?.name,
-
+        email: suspension.user?.email,
         status: suspension.status,
-
         suspended_until: suspension.suspended_until,
-
+        suspended_from: suspension.created_at,
         remaining_time: `${hours}h ${minutes}m`,
       };
     });

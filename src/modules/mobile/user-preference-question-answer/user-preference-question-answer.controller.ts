@@ -31,9 +31,13 @@ export class UserPreferenceQuestionAnswerController {
   }
   // 📥 GET ALL
   @Get()
-  callLedger(@Req() req) {
-    return this.service.callLedger(72);
+  // callLedger(@Req() req) {
+  //   return this.service.callLedger(72);
+  // }
+   calculateCompatibilityScores(@Req() req) {
+    return this.service.calculateCompatibilityScores(87,89);
   }
+  
 
   // // 📥 GET ONE
   // @Get(':id')

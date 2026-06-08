@@ -140,4 +140,123 @@ export class UserTraitLedgerService {
     // SINGLE bulk save query
     return await this.repository.save(entities);
   }
+
+  async getDomainCompatibilityScores(
+    user1Id: number,
+    user2Id: number,
+  ) {
+    const domainResults = await this.repository
+      .createQueryBuilder('utl')
+      .innerJoin('traits', 't', 't.id = utl.trait_id')
+      .innerJoin('domains', 'd', 'd.id = t.domain_id')
+      .select('d.id', 'domainId')
+      .addSelect('d.name', 'domainName')
+      .addSelect('d.domain_weight', 'domainWeight')
+      .addSelect(
+        `
+        ROUND(
+          CAST(
+            AVG(
+              CASE
+                WHEN utl.user_id = :user1Id
+                THEN utl.normalized_value
+              END
+            ) AS NUMERIC
+          ),
+          2
+        )
+        `,
+        'user1Average',
+      )
+      .addSelect(
+        `
+        ROUND(
+          CAST(
+            AVG(
+              CASE
+                WHEN utl.user_id = :user2Id
+                THEN utl.normalized_value
+              END
+            ) AS NUMERIC
+          ),
+          2
+        )
+        `,
+        'user2Average',
+      )
+      .addSelect(
+        `
+        ROUND(
+          CAST(
+            100 - ABS(
+              AVG(
+                CASE
+                  WHEN utl.user_id = :user1Id
+                  THEN utl.normalized_value
+                END
+              )
+              -
+              AVG(
+                CASE
+                  WHEN utl.user_id = :user2Id
+                  THEN utl.normalized_value
+                END
+              )
+            ) AS NUMERIC
+          ),
+          2
+        )
+        `,
+        'compatibilityPercentage',
+      )
+      .where('utl.user_id IN (:...userIds)', {
+        userIds: [user1Id, user2Id],
+      })
+      .andWhere('utl.normalized_value IS NOT NULL')
+      .setParameters({
+        user1Id,
+        user2Id,
+      })
+      .groupBy('d.id')
+      .addGroupBy('d.name')
+      .addGroupBy('d.domain_weight')
+      .orderBy('d.id', 'ASC')
+      .getRawMany();
+
+    const domains = domainResults.map((row) => ({
+      domainId: Number(row.domainId),
+      domainName: row.domainName,
+      domainWeight: Number(row.domainWeight),
+      user1Average: Number(row.user1Average),
+      user2Average: Number(row.user2Average),
+      compatibilityPercentage: Number(
+        row.compatibilityPercentage,
+      ),
+    }));
+
+    const totalWeight = domains.reduce(
+      (sum, domain) => sum + domain.domainWeight,
+      0,
+    );
+
+    const weightedScoreSum = domains.reduce(
+      (sum, domain) =>
+        sum +
+        domain.compatibilityPercentage *
+          domain.domainWeight,
+      0,
+    );
+
+    const overallCompatibility =
+      totalWeight > 0
+        ? Number(
+            (weightedScoreSum / totalWeight).toFixed(2),
+          )
+        : 0;
+
+    return {
+      overallCompatibility,
+      domains,
+    };
+  }
 }

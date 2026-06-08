@@ -343,4 +343,12 @@ export class UserPreferenceQuestionAnswerService {
       ledgerData,
     );
   }  
+
+  async calculateCompatibilityScores(userId1: number, userId2: number) {
+    
+    return this.userTraitLedgerService.getDomainCompatibilityScores(
+      userId1,
+      userId2,
+    );
+  } 
 }

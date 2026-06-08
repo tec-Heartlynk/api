@@ -16,12 +16,15 @@ export class ReportUserService {
     const reports = await this.reportUserRepo
       .createQueryBuilder('report')
 
-      // reported user profile
-      .leftJoin('users', 'user', 'user.id = report.to_user_id')
+      // Reported User
+      .leftJoin('users', 'toUser', 'toUser.id = report.to_user_id')
+      .leftJoin('profiles', 'toProfile', 'toProfile.user_id = toUser.id')
 
-      .leftJoin('profiles', 'profile', 'profile.user_id = user.id')
+      // Report Created By User
+      .leftJoin('users', 'fromUser', 'fromUser.id = report.from_user_id')
+      .leftJoin('profiles', 'fromProfile', 'fromProfile.user_id = fromUser.id')
 
-      // category question option
+      // Category Option
       .leftJoin(
         'category_question_options',
         'option',
@@ -30,20 +33,23 @@ export class ReportUserService {
 
       .select([
         'report.id as id',
+        'report.from_user_id as from_user_id',
         'report.to_user_id as to_user_id',
         'report.anything_else as anything_else',
         'report.describe as describe',
 
-        // profile data
-        'profile.name as profile_name',
+        // Reported User Name
+        'toProfile.name as reported_user_name',
 
-        // what happened data
+        // Reported By User Name
+        'fromProfile.name as reported_by_name',
+
+        // What Happened
         'option.id as what_happened_id',
         'option.option_title as what_happened_name',
       ])
 
       .orderBy('report.id', 'DESC')
-
       .getRawMany();
 
     return reports;

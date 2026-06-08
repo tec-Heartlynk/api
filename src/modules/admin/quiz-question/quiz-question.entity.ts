@@ -13,6 +13,7 @@ export class QuizQuestion {
   @Column({
     type: 'enum',
     enum: QuizCategory,
+    nullable: true,
   })
   category!: QuizCategory;
 

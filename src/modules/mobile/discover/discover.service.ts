@@ -304,6 +304,17 @@ export class DiscoverService {
           },
         });
 
+        // mutualLike liked user?
+        const chatWith = await this.heartRepo.exist({
+          where: {
+            from_user_id: profile.user?.id,
+            to_user_id: userId,
+          },
+        });
+
+        // Both liked each other
+        const mutualLike = !!heartExists && chatWith;
+
         // ✅ STAR CHECK
         const starExists = await this.starRepo.findOne({
           where: {
@@ -395,6 +406,8 @@ export class DiscoverService {
 
           // ✅ Star Status
           is_starred: !!starExists,
+
+          chat_with: mutualLike,
 
           // ✅ User Info
           user: {

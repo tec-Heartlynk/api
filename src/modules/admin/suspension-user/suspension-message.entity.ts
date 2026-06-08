@@ -39,6 +39,7 @@ export class SuspensionMessage {
   @Column({
     type: 'enum',
     enum: MessageSender,
+    default: MessageSender.ADMIN,
   })
   sender!: MessageSender;
 

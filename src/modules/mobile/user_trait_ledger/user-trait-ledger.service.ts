@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { In } from 'typeorm';
@@ -41,10 +38,7 @@ export class UserTraitLedgerService {
     return data;
   }
 
-  async update(
-    id: number,
-    dto: UpdateUserTraitLedgerDto,
-  ) {
+  async update(id: number, dto: UpdateUserTraitLedgerDto) {
     const entity = await this.findOne(id);
 
     Object.assign(entity, dto);
@@ -65,9 +59,10 @@ export class UserTraitLedgerService {
     userTraitValue: number,
   ): Promise<UserTraitLedger> {
     // Normalized Trait Value = Math.round((User Raw Value / Max Possible Raw Value) × 100)
-    const normalizedValue = traitMaxValue === 0
-      ? 0
-      : Math.round((userTraitValue / traitMaxValue) * 100);
+    const normalizedValue =
+      traitMaxValue === 0
+        ? 0
+        : Math.round((userTraitValue / traitMaxValue) * 100);
 
     const dto: CreateUserTraitLedgerDto = {
       user_id: userId,
@@ -91,8 +86,7 @@ export class UserTraitLedgerService {
       normalizedValue: number;
     }[],
   ): Promise<UserTraitLedger[]> {
-
-    const traitIds = ledgerData.map(item => item.traitId);
+    const traitIds = ledgerData.map((item) => item.traitId);
 
     // Fetch all existing records in ONE query
     const existingRecords = await this.repository.find({
@@ -105,14 +99,13 @@ export class UserTraitLedgerService {
     // Create lookup map
     const existingMap = new Map<number, UserTraitLedger>();
 
-    existingRecords.forEach(record => {
+    existingRecords.forEach((record) => {
       existingMap.set(record.trait_id, record);
     });
 
     const entities: UserTraitLedger[] = [];
 
     for (const data of ledgerData) {
-
       const normalizedValue =
         data.traitMaxValue === 0 ? 0 : data.normalizedValue;
 
@@ -141,10 +134,7 @@ export class UserTraitLedgerService {
     return await this.repository.save(entities);
   }
 
-  async getDomainCompatibilityScores(
-    user1Id: number,
-    user2Id: number,
-  ) {
+  async getDomainCompatibilityScores(user1Id: number, user2Id: number) {
     const domainResults = await this.repository
       .createQueryBuilder('utl')
       .innerJoin('traits', 't', 't.id = utl.trait_id')
@@ -229,9 +219,7 @@ export class UserTraitLedgerService {
       domainWeight: Number(row.domainWeight),
       user1Average: Number(row.user1Average),
       user2Average: Number(row.user2Average),
-      compatibilityPercentage: Number(
-        row.compatibilityPercentage,
-      ),
+      compatibilityPercentage: Number(row.compatibilityPercentage),
     }));
 
     const totalWeight = domains.reduce(
@@ -241,22 +229,16 @@ export class UserTraitLedgerService {
 
     const weightedScoreSum = domains.reduce(
       (sum, domain) =>
-        sum +
-        domain.compatibilityPercentage *
-          domain.domainWeight,
+        sum + domain.compatibilityPercentage * domain.domainWeight,
       0,
     );
 
     const overallCompatibility =
-      totalWeight > 0
-        ? Number(
-            (weightedScoreSum / totalWeight).toFixed(2),
-          )
-        : 0;
+      totalWeight > 0 ? Number((weightedScoreSum / totalWeight).toFixed(2)) : 0;
 
     return {
       overallCompatibility,
-      domains,
+      //domains,
     };
   }
 }

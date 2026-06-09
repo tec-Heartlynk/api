@@ -12,6 +12,7 @@ import { CrossAction } from '../cross/cross.entity';
 import { UserPreference } from '../user-preference/user-preference.entity';
 
 import { DailyProfileView } from './daily-profile-view.entity';
+import { UserTraitLedgerModule } from '../user_trait_ledger/user-trait-ledger.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { DailyProfileView } from './daily-profile-view.entity';
       UserPreference,
       DailyProfileView,
     ]),
+    UserTraitLedgerModule,
   ],
 
   controllers: [DiscoverController],

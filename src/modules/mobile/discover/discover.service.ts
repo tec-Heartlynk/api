@@ -14,6 +14,7 @@ import { StarAction } from '../star/star.entity';
 import { CrossAction } from '../cross/cross.entity';
 import { UserPreference } from '../user-preference/user-preference.entity';
 import { DailyProfileView } from './daily-profile-view.entity';
+import { UserTraitLedgerService } from '../user_trait_ledger/user-trait-ledger.service';
 
 @Injectable()
 export class DiscoverService {
@@ -38,6 +39,7 @@ export class DiscoverService {
     @InjectRepository(DailyProfileView)
     private readonly dailyProfileViewRepo: Repository<DailyProfileView>,
     private readonly configService: ConfigService,
+    private readonly userTraitLedgerService: UserTraitLedgerService,
   ) {}
 
   // ✅ GET ALL PROFILE WITH DISTANCE
@@ -354,10 +356,22 @@ export class DiscoverService {
         // Random value
         const randomValue = compatibilityMessages[randomKey];
 
-        console.log({
-          key: randomKey,
-          value: randomValue,
-        });
+        // console.log({
+        //   key: randomKey,
+        //   value: randomValue,
+        // });
+
+        // ✅ Get Compatibility Scores
+
+        const domainCompatibilityScores =
+          await this.userTraitLedgerService.getDomainCompatibilityScores(
+            userId,
+            profile.user?.id || 0,
+          );
+
+        const compatibilityScore = Number(
+          domainCompatibilityScores.overallCompatibility.toFixed(2),
+        );
 
         return {
           id: profile.id,
@@ -419,6 +433,9 @@ export class DiscoverService {
           verified_status: profile.user?.settings?.verified_status ?? 0,
 
           match_status: profile.user?.settings?.match_status ?? 0,
+          compatibility_scores: compatibilityScore,
+          compatibility_message:
+            this.getCompatibilityMessage(compatibilityScore),
         };
       }),
     );
@@ -453,6 +470,20 @@ export class DiscoverService {
       data,
     };
   }
-
-  // ✅ DISTANCE CALCULATE
+  // ✅ Get Compatibility Message
+  getCompatibilityMessage(score: number): string {
+    if (score >= 90) {
+      return 'Exceptional Alignment';
+    } else if (score >= 80) {
+      return 'Strong Compatibility';
+    } else if (score >= 70) {
+      return 'Very Promising';
+    } else if (score >= 60) {
+      return 'Moderate Potential';
+    } else if (score >= 50) {
+      return 'Challenging but Possible';
+    } else {
+      return 'High Friction Risk';
+    }
+  }
 }

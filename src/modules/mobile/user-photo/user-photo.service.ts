@@ -272,4 +272,33 @@ export class UserPhotoService {
       throw new InternalServerErrorException(message);
     }
   }
+  async changePrimaryPhoto(imageId: number, userId: number) {
+    const profile = await this.resolveProfile(userId);
+    const profileId = profile.user_id;
+
+    const photo = await this.photoRepo.findOne({
+      where: {
+        id: imageId,
+        user_id: profileId,
+      },
+    });
+
+    if (!photo) {
+      throw new NotFoundException('Image not found');
+    }
+
+    // Reset all photos
+    await this.photoRepo.update({ user_id: profileId }, { is_primary: false });
+
+    // Set selected photo as primary
+    await this.photoRepo.update(
+      { id: imageId, user_id: profileId },
+      { is_primary: true },
+    );
+
+    return {
+      success: true,
+      message: 'Primary image updated successfully',
+    };
+  }
 }

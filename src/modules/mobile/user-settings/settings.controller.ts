@@ -18,4 +18,17 @@ export class SettingsController {
   updateSettings(@Req() req, @Body() dto: UpdateSettingsDto) {
     return this.service.updateSettings(req.user.userId, dto);
   }
+
+  // profile-visibility
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile-visibility')
+  updateProfileVisibility(
+    @Req() req,
+    @Body('profile_visibility') profile_visibility: boolean,
+  ) {
+    return this.service.updateProfileVisibility(
+      req.user.userId,
+      profile_visibility,
+    );
+  }
 }

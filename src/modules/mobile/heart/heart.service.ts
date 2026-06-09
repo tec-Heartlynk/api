@@ -4,12 +4,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { calculateAge } from '../../../common/function/common-function';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { HeartAction } from './heart.entity';
 import { HeartDto } from './dto/heart.dto';
 import { UsersService } from '../users/users.service';
+import { StarAction } from '../star/star.entity';
+import { UserTraitLedgerService } from '../user_trait_ledger/user-trait-ledger.service';
 
 @Injectable()
 export class HeartService {
@@ -17,6 +21,9 @@ export class HeartService {
     @InjectRepository(HeartAction)
     private readonly heartRepo: Repository<HeartAction>,
     private userService: UsersService,
+    @InjectRepository(StarAction)
+    private readonly starRepo: Repository<StarAction>,
+    private readonly userTraitLedgerService: UserTraitLedgerService,
   ) {}
 
   // CREATE HEART
@@ -87,32 +94,76 @@ export class HeartService {
   }
 
   async getheartnewlikes(userId: number) {
+    const baseUrl = process.env.BASE_URL;
+    const uploadPath = process.env.UPLOAD_PATH;
+
     const data = await this.heartRepo
       .createQueryBuilder('heart')
-
-      .leftJoin(
-        'profiles', // table name
-        'profile', // alias
-        'profile.user_id = heart.to_user_id',
-      )
-
+      .leftJoin('profiles', 'profile', 'profile.user_id = heart.to_user_id')
+      .leftJoin('user_photo', 'photo', 'photo.user_id = heart.to_user_id')
       .select([
         'heart.id AS id',
         'heart.from_user_id AS from_user_id',
         'heart.to_user_id AS to_user_id',
-        'profile.name AS profile_name',
         'profile.id AS profile_id',
+        'profile.name AS profile_name',
+        'profile.dob AS dob',
       ])
-
-      .where('heart.to_user_id = :userId', { userId })
-
+      .addSelect(
+        `CONCAT('${baseUrl}/${uploadPath}/profile/', photo.photo)`,
+        'profile_photo',
+      )
+      .where('heart.from_user_id = :userId', { userId })
       .orderBy('heart.id', 'DESC')
-
       .getRawMany();
+
+    const formattedData = await Promise.all(
+      data.map(async (item) => {
+        // User who liked current user
+        const targetUserId = Number(item.to_user_id);
+
+        // ✅ Age
+        let age: number | null = null;
+        if (item.dob) {
+          age = calculateAge(item.dob);
+        }
+
+        // ✅ Star Check
+        const starExists = await this.starRepo.findOne({
+          where: {
+            from_user_id: userId,
+            to_user_id: targetUserId,
+          },
+        });
+
+        // ✅ Compatibility Score
+        const domainCompatibilityScores =
+          await this.userTraitLedgerService.getDomainCompatibilityScores(
+            userId,
+            targetUserId,
+          );
+
+        const compatibilityScore = Number(
+          domainCompatibilityScores.overallCompatibility.toFixed(2),
+        );
+
+        return {
+          id: item.id,
+          from_user_id: item.from_user_id,
+          to_user_id: item.to_user_id,
+          profile_id: item.profile_id,
+          profile_name: item.profile_name,
+          profile_photo: item.profile_photo,
+          age,
+          is_starred: !!starExists,
+          compatibility_score: compatibilityScore,
+        };
+      }),
+    );
 
     return {
       success: true,
-      data,
+      data: formattedData,
     };
   }
 

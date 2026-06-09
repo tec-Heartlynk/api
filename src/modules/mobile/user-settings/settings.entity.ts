@@ -58,4 +58,7 @@ export class UserSettings {
 
   @Column({ default: 0 })
   match_status!: number;
+
+  @Column({ default: true })
+  profile_visibility!: boolean;
 }

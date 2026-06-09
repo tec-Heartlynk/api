@@ -45,4 +45,13 @@ export class SettingsService {
     await this.crossService.deleteByUserId(user_id);
     return updatedSettings;
   }
+
+  async updateProfileVisibility(user_id: number, profile_visibility: boolean) {
+    await this.repo.update({ user_id }, { profile_visibility });
+
+    return {
+      success: true,
+      profile_visibility,
+    };
+  }
 }

@@ -25,6 +25,7 @@ import { ReportAdminUserModule } from './modules/admin/report-user/report-user.m
 import { PagesAdminModule } from './modules/admin/pages/pages.module';
 import { SuspensionAdminModule } from './modules/admin/suspension-user/suspension.module';
 import { BlockAdminModule } from './modules/admin/block-user/block.module';
+import { FaqModule } from './modules/admin/faq/faq.module';
 
 //Mobile
 import { UsersModule } from './modules/mobile/users/users.module';
@@ -47,6 +48,7 @@ import { ReportUserModule } from './modules/mobile/report-user/report-user.modul
 import { PagesModule } from './modules/mobile/pages/pages.module';
 import { BlockModule } from './modules/mobile/block-user/block.module';
 import { SuspensionModule } from './modules/mobile/suspension-user/suspension.module';
+import { FaqmobileModule } from './modules/mobile/faq/faq.module';
 
 @Module({
   imports: [
@@ -105,6 +107,7 @@ import { SuspensionModule } from './modules/mobile/suspension-user/suspension.mo
     BlockModule,
     SuspensionAdminModule,
     BlockAdminModule,
+    FaqmobileModule,
   ],
   providers: [
     {

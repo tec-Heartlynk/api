@@ -35,8 +35,6 @@ import { Profile } from '../profile/profile.entity';
 export class UserPhotoController {
   constructor(private readonly service: UserPhotoService) {}
 
- 
-
   // =========================
   // Upload Photos
   // =========================
@@ -60,14 +58,14 @@ export class UserPhotoController {
       }),
 
       fileFilter: (req, file, callback) => {
-       const allowedMimeTypes = [
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/heif',
-  'image/heic'
-];
+        const allowedMimeTypes = [
+          'image/jpeg',
+          'image/jpg',
+          'image/png',
+          'image/webp',
+          'image/heif',
+          'image/heic',
+        ];
 
         if (!allowedMimeTypes.includes(file.mimetype)) {
           return callback(
@@ -157,22 +155,22 @@ export class UserPhotoController {
     // =========================
 
     return {
-  success: true,
+      success: true,
 
-  message: 'Photos uploaded successfully',
+      message: 'Photos uploaded successfully',
 
-  total_photos: existingPhotos.length + uploadedPhotos.length,
+      total_photos: existingPhotos.length + uploadedPhotos.length,
 
-  data: uploadedPhotos.map((item) => ({
-    id: item.id,
+      data: uploadedPhotos.map((item) => ({
+        id: item.id,
 
-    user_id: item.user_id,
+        user_id: item.user_id,
 
-    photo: `${process.env.BASE_URL}/uploads/profile/${item.photo}`,
+        photo: `${process.env.BASE_URL}/uploads/profile/${item.photo}`,
 
-    is_primary: item.is_primary,
-  })),
-};
+        is_primary: item.is_primary,
+      })),
+    };
   }
 
   // =========================
@@ -194,12 +192,15 @@ export class UserPhotoController {
   }
 
   // =========================
-  // Update Photo
+  // Make Primary image
   // =========================
 
+  @Put('set-primary-image/:imageId')
+  async changePrimaryPhoto(@Param('imageId') imageId: number, @Req() req) {
+    return this.service.changePrimaryPhoto(Number(imageId), req.user.userId);
+  }
+
   //Get Photos by User ID (for Profile)
-
-
 
   @UseGuards(JwtAuthGuard)
   @Get('user/:userId')

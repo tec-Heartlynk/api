@@ -144,6 +144,7 @@ export class DiscoverService {
       .andWhere('user.isActive = :isActive', {
         isActive: true,
       })
+      .andWhere('settings.profile_visibility = true')
       .andWhere('user.status = 10');
 
     // ✅ Dynamic Age Filter

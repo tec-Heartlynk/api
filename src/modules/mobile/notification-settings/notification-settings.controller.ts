@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 import { NotificationSettingsService } from './notification-settings.service';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 
-@Controller('notification-settings')
+@Controller('mobile/notification-settings')
 export class NotificationSettingsController {
   constructor(
     private readonly notificationService: NotificationSettingsService,
@@ -16,7 +16,7 @@ export class NotificationSettingsController {
   async getSettings(@Req() req) {
     return {
       success: true,
-      data: await this.notificationService.getSettings(req.user.id),
+      data: await this.notificationService.getSettings(req.user.userId),
     };
   }
 
@@ -26,7 +26,7 @@ export class NotificationSettingsController {
     return {
       success: true,
       message: 'Settings Updated',
-      data: await this.notificationService.updateSettings(req.user.id, dto),
+      data: await this.notificationService.updateSettings(req.user.userId, dto),
     };
   }
 }

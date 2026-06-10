@@ -47,11 +47,6 @@ export class ReportProblemController {
     return this.reportProblemService.findOne(id, req.user.userId);
   }
 
-  @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number, @Req() req) {
-    return this.reportProblemService.remove(id, req.user.userId);
-  }
-
   @Patch(':id/status')
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,

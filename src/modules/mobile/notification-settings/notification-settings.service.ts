@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationSetting } from './notification-settings.entity';
 import { Repository } from 'typeorm';
+import { UpdateNotificationDto } from './dto/update-notification.dto';
 
 @Injectable()
 export class NotificationSettingsService {
@@ -26,7 +27,7 @@ export class NotificationSettingsService {
     return setting;
   }
 
-  async updateSettings(userId: number, payload: Partial<NotificationSetting>) {
+  async updateSettings(userId: number, dto: UpdateNotificationDto) {
     let setting = await this.settingRepo.findOne({
       where: {
         user_id: userId,
@@ -39,7 +40,7 @@ export class NotificationSettingsService {
       });
     }
 
-    Object.assign(setting, payload);
+    Object.assign(setting, dto);
 
     return await this.settingRepo.save(setting);
   }

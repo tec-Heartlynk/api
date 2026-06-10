@@ -26,6 +26,7 @@ import { PagesAdminModule } from './modules/admin/pages/pages.module';
 import { SuspensionAdminModule } from './modules/admin/suspension-user/suspension.module';
 import { BlockAdminModule } from './modules/admin/block-user/block.module';
 import { FaqModule } from './modules/admin/faq/faq.module';
+import { ReportAdminProblemModule } from './modules/admin/report-problem/report-problem.module';
 
 //Mobile
 import { UsersModule } from './modules/mobile/users/users.module';
@@ -49,6 +50,8 @@ import { PagesModule } from './modules/mobile/pages/pages.module';
 import { BlockModule } from './modules/mobile/block-user/block.module';
 import { SuspensionModule } from './modules/mobile/suspension-user/suspension.module';
 import { FaqmobileModule } from './modules/mobile/faq/faq.module';
+import { ReportProblemModule } from './modules/mobile/report-problem/report-problem.module';
+import { NotificationSettingsModule } from './modules/mobile/notification-settings/notification-settings.module';
 
 @Module({
   imports: [
@@ -107,7 +110,11 @@ import { FaqmobileModule } from './modules/mobile/faq/faq.module';
     BlockModule,
     SuspensionAdminModule,
     BlockAdminModule,
+    FaqModule,
     FaqmobileModule,
+    ReportAdminProblemModule,
+    ReportProblemModule,
+    NotificationSettingsModule,
   ],
   providers: [
     {

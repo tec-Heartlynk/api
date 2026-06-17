@@ -14,6 +14,9 @@ import { HeartDto } from './dto/heart.dto';
 import { UsersService } from '../users/users.service';
 import { StarAction } from '../star/star.entity';
 import { UserTraitLedgerService } from '../user_trait_ledger/user-trait-ledger.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ProfileService } from '../profile/profile.service';
+import { profile } from 'console';
 
 @Injectable()
 export class HeartService {
@@ -24,6 +27,8 @@ export class HeartService {
     @InjectRepository(StarAction)
     private readonly starRepo: Repository<StarAction>,
     private readonly userTraitLedgerService: UserTraitLedgerService,
+    private readonly notificationsService: NotificationsService,
+    private readonly profileService: ProfileService,
   ) {}
 
   // CREATE HEART
@@ -55,6 +60,65 @@ export class HeartService {
 
     const saved = await this.heartRepo.save(data);
 
+    if (saved?.id) {
+      const sender = await this.profileService.findByUserIdprofile(userId);
+      const receiver = await this.profileService.findByUserIdprofile(
+        dto.to_user_id,
+      );
+
+      // Fetch sender details for notification
+      const senderName = sender?.data?.name;
+      const receiverName = receiver?.data?.name;
+
+      const senderPhoto = sender?.data?.photos?.[0]?.photo
+        ? sender?.data?.photos?.[0]?.photo
+        : '';
+
+      const receiverPhoto = receiver?.data?.photos?.[0]?.photo
+        ? receiver?.data?.photos?.[0]?.photo
+        : '';
+
+      const mutualLike = await this.heartRepo.findOne({
+        where: {
+          from_user_id: dto.to_user_id,
+          to_user_id: userId,
+        },
+      });
+
+      if (mutualLike) {
+        console.log("It's a match!");
+        await this.notificationsService.sendNotification(
+          userId,
+          dto.to_user_id,
+          'new_match',
+          {
+            name: senderName,
+          },
+          senderPhoto,
+        );
+
+        await this.notificationsService.sendNotification(
+          dto.to_user_id,
+          userId,
+          'new_match',
+          {
+            name: receiverName,
+          },
+          receiverPhoto,
+        );
+      } else {
+        await this.notificationsService.sendNotification(
+          userId,
+          dto.to_user_id,
+          'new_match',
+          {
+            name: senderName,
+          },
+          senderPhoto,
+        );
+      }
+    }
+
     return {
       success: true,
       message: 'Heart action saved successfully',
@@ -63,33 +127,48 @@ export class HeartService {
   }
 
   // HISTORY
-  async getheartdetails(userId: number) {
+  async getHeartDetails(userId: number) {
+    const baseUrl = process.env.BASE_URL;
+    const uploadPath = process.env.UPLOAD_PATH;
+
     const data = await this.heartRepo
       .createQueryBuilder('heart')
-
-      .leftJoin(
-        'profiles', // table name
-        'profile', // alias
-        'profile.user_id = heart.to_user_id',
-      )
-
+      .leftJoin('profiles', 'profile', 'profile.user_id = heart.to_user_id')
+      .leftJoin('user_photo', 'photo', 'photo.user_id = heart.to_user_id')
       .select([
         'heart.id AS id',
         'heart.from_user_id AS from_user_id',
         'heart.to_user_id AS to_user_id',
-        'profile.name AS profile_name',
         'profile.id AS profile_id',
+        'profile.name AS profile_name',
+        'profile.dob AS dob',
       ])
-
+      .addSelect(
+        `CONCAT('${baseUrl}/${uploadPath}/profile/', photo.photo)`,
+        'profile_photo',
+      )
       .where('heart.from_user_id = :userId', { userId })
-
       .orderBy('heart.id', 'DESC')
-
       .getRawMany();
+
+    const result = await Promise.all(
+      data.map(async (item) => {
+        const scores =
+          await this.userTraitLedgerService.getDomainCompatibilityScores(
+            userId,
+            item.to_user_id,
+          );
+
+        return {
+          ...item,
+          compatibility_score: Number(scores.overallCompatibility.toFixed(2)),
+        };
+      }),
+    );
 
     return {
       success: true,
-      data,
+      data: result,
     };
   }
 

@@ -4,6 +4,7 @@ import { Repository, In, Not, MoreThan } from 'typeorm';
 import {
   calculateAge,
   calculateDistance,
+  getCompatibilityMessage,
 } from '../../../common/function/common-function';
 import { ConfigService } from '@nestjs/config';
 
@@ -435,8 +436,7 @@ export class DiscoverService {
 
           match_status: profile.user?.settings?.match_status ?? 0,
           compatibility_scores: compatibilityScore,
-          compatibility_message:
-            this.getCompatibilityMessage(compatibilityScore),
+          compatibility_message: getCompatibilityMessage(compatibilityScore),
         };
       }),
     );
@@ -470,21 +470,5 @@ export class DiscoverService {
 
       data,
     };
-  }
-  // ✅ Get Compatibility Message
-  getCompatibilityMessage(score: number): string {
-    if (score >= 90) {
-      return 'Exceptional Alignment';
-    } else if (score >= 80) {
-      return 'Strong Compatibility';
-    } else if (score >= 70) {
-      return 'Very Promising';
-    } else if (score >= 60) {
-      return 'Moderate Potential';
-    } else if (score >= 50) {
-      return 'Challenging but Possible';
-    } else {
-      return 'High Friction Risk';
-    }
   }
 }

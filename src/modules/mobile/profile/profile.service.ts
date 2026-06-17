@@ -12,11 +12,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 
-import { calculateAge } from '../../../common/function/common-function';
+import {
+  calculateAge,
+  calculateDistance,
+  getCompatibilityMessage,
+} from '../../../common/function/common-function';
 import { ConfigService } from '@nestjs/config';
 import { CategoryQuestionOption } from '../questions_option/option/category-question-option.entity';
 import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 import { UserPhotoService } from '../user-photo/user-photo.service';
+import { UserTraitLedgerService } from '../user_trait_ledger/user-trait-ledger.service';
 
 @Injectable()
 export class ProfileService {
@@ -31,6 +36,7 @@ export class ProfileService {
     private readonly categoryquestionoptionRepo: Repository<CategoryQuestionOption>,
     @InjectRepository(QuizQuestion)
     private readonly quizQuestionRepo: Repository<QuizQuestion>,
+    private readonly userTraitLedgerService: UserTraitLedgerService,
   ) {}
 
   // Create profile for user
@@ -76,9 +82,9 @@ export class ProfileService {
   }
 
   //Get profile detail
-  async findByUserIdprofile(userId: number) {
+  async findByUserIdprofile(userId: number, targetUserId?: number) {
     try {
-      const profile = await this.profileRepo
+      const query = this.profileRepo
         .createQueryBuilder('profile')
 
         .leftJoinAndSelect('profile.user', 'user')
@@ -97,15 +103,31 @@ export class ProfileService {
         // answer relation
         .leftJoinAndSelect('preferenceAnswers.answer', 'answer')
 
-        .where('profile.user_id = :userId', { userId })
+        .where('profile.user_id = :userId', { userId });
 
-        .getOne();
+      // Add target profile only when targetUserId is provided
+
+      if (targetUserId) {
+        query
+          .leftJoin(
+            this.profileRepo.metadata.tableName,
+            'targetProfile',
+            'targetProfile.user_id = :targetUserId',
+            { targetUserId },
+          )
+          .addSelect(['targetProfile.latitude', 'targetProfile.longitude']);
+      }
+
+      const result = await query.getRawAndEntities();
+
+      const profile = result.entities[0];
 
       if (!profile) {
         throw new NotFoundException('Profile not found');
       }
 
       const user = profile.user;
+
       if (!user) {
         throw new InternalServerErrorException(
           'Profile user relation is missing',
@@ -115,7 +137,7 @@ export class ProfileService {
       // get all option titles
       const options = await this.categoryquestionoptionRepo.find();
 
-      const optionMap = {};
+      const optionMap: Record<number, string> = {};
 
       options.forEach((item) => {
         optionMap[item.id] = item.option_title;
@@ -162,13 +184,50 @@ export class ProfileService {
         (filledFields / profileFields.length) * 100,
       );
 
-      // end of profile completion calculation
-
       // ✅ Age Calculate
       let age: number | null = null;
+
       if (profile.dob) {
         age = calculateAge(profile.dob);
       }
+
+      // ✅ Distance Calculation
+      let distance: number | null = null;
+
+      if (targetUserId) {
+        const myLat = Number(profile.latitude);
+        const myLng = Number(profile.longitude);
+
+        const lat2 = Number(result.raw[0]?.targetProfile_latitude);
+
+        const lon2 = Number(result.raw[0]?.targetProfile_longitude);
+
+        if (!isNaN(myLat) && !isNaN(myLng) && !isNaN(lat2) && !isNaN(lon2)) {
+          distance = calculateDistance(myLat, myLng, lat2, lon2);
+        }
+      }
+
+      // ✅ Get Compatibility Scores
+
+      const domainCompatibilityScores =
+        await this.userTraitLedgerService.getDomainCompatibilityScores(
+          userId,
+          targetUserId || 0,
+        );
+
+      const compatibilityScore = Number(
+        domainCompatibilityScores.overallCompatibility.toFixed(2),
+      );
+
+      // ✅ Get Domain Compatibility Scores
+      const domains = domainCompatibilityScores.domains;
+      const alignmentBreakdown = domains.reduce(
+        (acc, domain) => {
+          acc[domain.domainName] = domain.compatibilityPercentage;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
       return {
         success: true,
@@ -189,10 +248,16 @@ export class ProfileService {
           latitude: profile.latitude,
           longitude: profile.longitude,
 
+          distance,
+
           photos: user.photos?.map((item) => ({
             id: item.id,
             photo: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${item.photo}`,
           })),
+
+          compatibility_scores: compatibilityScore,
+          compatibility_message: getCompatibilityMessage(compatibilityScore),
+          alignment_breakdown: alignmentBreakdown,
 
           user: {
             id: user.id,
@@ -201,6 +266,7 @@ export class ProfileService {
             isActive: user.isActive,
             isBlocked: user.isBlocked,
             status: user.status,
+
             createdAt: user.createdAt
               ? new Date(user.createdAt).toISOString().split('T')[0]
               : null,
@@ -255,14 +321,17 @@ export class ProfileService {
                     id,
                     title: optionMap[id],
                   })),
+
                   open_to_children: {
                     id: user.preferences.open_to_children,
                     title: optionMap[user.preferences.open_to_children],
                   },
+
                   pets: {
                     id: user.preferences.pets,
                     title: optionMap[user.preferences.pets],
                   },
+
                   drinking: {
                     id: user.preferences.drinking,
                     title: optionMap[user.preferences.drinking],
@@ -272,18 +341,22 @@ export class ProfileService {
                     id: user.preferences.smoking,
                     title: optionMap[user.preferences.smoking],
                   },
+
                   diet: {
                     id: user.preferences.diet,
                     title: optionMap[user.preferences.diet],
                   },
+
                   fitness_level: {
                     id: user.preferences.fitness_level,
                     title: optionMap[user.preferences.fitness_level],
                   },
+
                   travel_habits: {
                     id: user.preferences.travel_habits,
                     title: optionMap[user.preferences.travel_habits],
                   },
+
                   work_life: {
                     id: user.preferences.work_life,
                     title: optionMap[user.preferences.work_life],
@@ -312,7 +385,6 @@ export class ProfileService {
       };
     } catch (error) {
       console.log(error);
-
       throw error;
     }
   }

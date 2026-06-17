@@ -31,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const token = authHeader?.split(' ')[1];
 
     // 🔥 BLACKLIST CHECK
-    if (token && await this.blacklistService.isBlacklisted(token)) {
+    if (token && (await this.blacklistService.isBlacklisted(token))) {
       throw new UnauthorizedException('Token is blacklisted');
     }
 

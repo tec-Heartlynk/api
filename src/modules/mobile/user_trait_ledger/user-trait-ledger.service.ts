@@ -238,7 +238,7 @@ export class UserTraitLedgerService {
 
     return {
       overallCompatibility,
-      //domains,
+      domains,
     };
   }
 }

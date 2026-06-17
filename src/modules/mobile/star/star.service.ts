@@ -10,12 +10,16 @@ import { Repository } from 'typeorm';
 import { StarAction } from './star.entity';
 import { StarDto } from './dto/star.dto';
 import { calculateAge } from '../../../common/function/common-function';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ProfileService } from '../profile/profile.service';
 
 @Injectable()
 export class StarService {
   constructor(
     @InjectRepository(StarAction)
     private readonly starRepo: Repository<StarAction>,
+    private readonly notificationsService: NotificationsService,
+    private readonly profileService: ProfileService,
   ) {}
 
   async create(userId: number, dto: StarDto) {
@@ -29,6 +33,27 @@ export class StarService {
     });
 
     const saved = await this.starRepo.save(data);
+
+    if (saved?.id) {
+      const sender = await this.profileService.findByUserIdprofile(userId);
+
+      // Fetch sender details for notification
+      const senderName = sender?.data?.name;
+
+      const senderPhoto = sender?.data?.photos?.[0]?.photo
+        ? sender?.data?.photos?.[0]?.photo
+        : '';
+
+      await this.notificationsService.sendNotification(
+        userId,
+        dto.to_user_id,
+        'send_star',
+        {
+          name: senderName,
+        },
+        senderPhoto,
+      );
+    }
 
     return {
       success: true,

@@ -46,3 +46,20 @@ export function calculateDistance(
 
   return Number((R * c).toFixed(2));
 }
+
+// ✅ Get Compatibility Message
+export function getCompatibilityMessage(score: number): string {
+  if (score >= 90) {
+    return 'Exceptional Alignment';
+  } else if (score >= 80) {
+    return 'Strong Compatibility';
+  } else if (score >= 70) {
+    return 'Very Promising';
+  } else if (score >= 60) {
+    return 'Moderate Potential';
+  } else if (score >= 50) {
+    return 'Challenging but Possible';
+  } else {
+    return 'High Friction Risk';
+  }
+}

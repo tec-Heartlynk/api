@@ -25,7 +25,7 @@ export class HeartController {
 
   @Get()
   async getheartdetails(@Req() req) {
-    return this.heartService.getheartdetails(req.user.userId);
+    return this.heartService.getHeartDetails(req.user.userId);
   }
 
   @Get('new-likes')

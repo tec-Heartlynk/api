@@ -19,7 +19,10 @@ export class NotificationSetting {
   @Column({ default: true })
   new_message!: boolean;
 
-  @Column({ default: false })
+  @Column({ default: true })
+  send_star!: boolean;
+
+  @Column({ default: true })
   profile_like!: boolean;
 
   @Column({ default: false })

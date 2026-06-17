@@ -31,7 +31,7 @@ export class OtpService {
 
     const saved = await this.repo.save(record);
 
-    console.log('OTP SAVED =>', saved);
+    // console.log('OTP SAVED =>', saved);
 
     return saved;
   }

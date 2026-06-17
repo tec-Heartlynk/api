@@ -8,16 +8,19 @@ import { CategoryQuestionOption } from '../questions_option/option/category-ques
 import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 import { CrossModule } from '../cross/cross.module'; // ✅ FIX
 import { UserPhotoModule } from '../user-photo/user-photo.module';
+import { UserTraitLedgerModule } from '../user_trait_ledger/user-trait-ledger.module'; // ✅ FIX
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Profile, CategoryQuestionOption, QuizQuestion]),
     UsersModule,
+    UserTraitLedgerModule,
     UserPhotoModule,
     CrossModule, // ✅ FIXED
   ],
 
   controllers: [ProfileController],
   providers: [ProfileService],
+  exports: [ProfileService],
 })
 export class ProfileModule {}

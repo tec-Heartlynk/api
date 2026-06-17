@@ -49,10 +49,11 @@ export class ProfileController {
   // ✅ GET PROFILE STATUS
   @Get('get-single-profile/:id')
   getSingleProfile(
+    @Req() req,
     @Param('id', ParseIntPipe)
     id: number,
   ) {
-    return this.profileService.findByUserIdprofile(id);
+    return this.profileService.findByUserIdprofile(id, req.user.userId);
   }
 
   // ✅ UPDATE PROFILE (without image)

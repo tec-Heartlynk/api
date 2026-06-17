@@ -12,7 +12,7 @@ import {
   Req,
   BadRequestException,
   ParseIntPipe,
-  Put,
+  Patch,
   Body,
 } from '@nestjs/common';
 
@@ -195,7 +195,7 @@ export class UserPhotoController {
   // Make Primary image
   // =========================
 
-  @Put('set-primary-image/:imageId')
+  @Patch('set-primary-image/:imageId')
   async changePrimaryPhoto(@Param('imageId') imageId: number, @Req() req) {
     return this.service.changePrimaryPhoto(Number(imageId), req.user.userId);
   }

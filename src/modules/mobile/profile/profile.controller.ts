@@ -17,6 +17,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../../config/multer.config';
+import { UpdateDiscoveryPreferenceDto } from './dto/update-discovery-preference.dto';
 
 @Controller('mobile/profile')
 @UseGuards(JwtAuthGuard)
@@ -56,10 +57,12 @@ export class ProfileController {
     return this.profileService.findByUserIdprofile(id, req.user.userId);
   }
 
-  // ✅ UPDATE PROFILE (without image)
-  // @Patch('update-profile')
-  // @UseInterceptors(FilesInterceptor('photos', 6, multerConfig))
-  // updateProfile(@Req() req, @Body() dto: UpdateProfileDto) {
-  //   return this.profileService.update(req.user.userId, dto);
-  // }
+  // Update Discovery preference
+  @Patch('update-discovery-preference')
+  async updateDiscoveryPreference(
+    @Req() req,
+    @Body() dto: UpdateDiscoveryPreferenceDto,
+  ) {
+    return this.profileService.updateDiscoveryPreference(req.user.userId, dto);
+  }
 }

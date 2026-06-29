@@ -50,6 +50,18 @@ export class Profile {
   })
   longitude!: number;
 
+  @Column({ nullable: true })
+  min_age!: number;
+
+  @Column({ nullable: true })
+  max_age!: number;
+
+  @Column({ nullable: true })
+  max_distance!: number;
+
+  @Column({ nullable: true })
+  min_compatibility_scroe!: number;
+
   // ✅ photos relation
 
   @OneToMany(() => UserPhoto, (photo) => photo.user)

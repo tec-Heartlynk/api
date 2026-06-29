@@ -17,6 +17,7 @@ export class BlacklistService {
 
   async isBlacklisted(token: string): Promise<boolean> {
     const exists = await this.repo.findOne({ where: { token } });
+
     return !!exists;
   }
 }

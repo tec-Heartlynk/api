@@ -247,7 +247,7 @@ export class NotificationsService {
         `CONCAT('${baseUrl}/${uploadPath}/profile/', photo.photo)`,
         'profile_image',
       )
-      .where('notification.from_user_id = :userId', { userId });
+      .where('notification.user_id = :userId', { userId });
 
     const skip = (page - 1) * limit;
 
@@ -271,6 +271,51 @@ export class NotificationsService {
         hasNextPage: page < Math.ceil(total / limit),
         hasPreviousPage: page > 1,
       },
+    };
+  }
+
+  // Mark all notifications as read for a user
+
+  async markAllAsRead(userId: number) {
+    const result = await this.notificationRepo.update(
+      {
+        from_user_id: userId,
+        is_read: false,
+      },
+      {
+        is_read: true,
+      },
+    );
+
+    return {
+      success: true,
+      message: 'All notifications marked as read',
+      updatedCount: result.affected || 0,
+    };
+  }
+
+  // Mark a specific notification as read for a user
+
+  async markAsRead(userId: number, notificationId: number) {
+    const notification = await this.notificationRepo.findOne({
+      where: {
+        id: notificationId,
+        from_user_id: userId,
+      },
+    });
+
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    if (!notification.is_read) {
+      notification.is_read = true;
+      await this.notificationRepo.save(notification);
+    }
+
+    return {
+      success: true,
+      message: 'Notification marked as read',
     };
   }
 }

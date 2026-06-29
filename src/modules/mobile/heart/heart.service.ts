@@ -128,122 +128,140 @@ export class HeartService {
 
   // HISTORY
   async getHeartDetails(userId: number) {
-    const baseUrl = process.env.BASE_URL;
-    const uploadPath = process.env.UPLOAD_PATH;
+    try {
+      const baseUrl = process.env.BASE_URL;
+      const uploadPath = process.env.UPLOAD_PATH;
 
-    const data = await this.heartRepo
-      .createQueryBuilder('heart')
-      .leftJoin('profiles', 'profile', 'profile.user_id = heart.to_user_id')
-      .leftJoin('user_photo', 'photo', 'photo.user_id = heart.to_user_id')
-      .select([
-        'heart.id AS id',
-        'heart.from_user_id AS from_user_id',
-        'heart.to_user_id AS to_user_id',
-        'profile.id AS profile_id',
-        'profile.name AS profile_name',
-        'profile.dob AS dob',
-      ])
-      .addSelect(
-        `CONCAT('${baseUrl}/${uploadPath}/profile/', photo.photo)`,
-        'profile_photo',
-      )
-      .where('heart.from_user_id = :userId', { userId })
-      .orderBy('heart.id', 'DESC')
-      .getRawMany();
+      const data = await this.heartRepo
+        .createQueryBuilder('heart')
+        .leftJoin('profiles', 'profile', 'profile.user_id = heart.to_user_id')
+        .leftJoin(
+          'user_photo',
+          'photo',
+          'photo.user_id = heart.to_user_id AND photo.is_primary = true',
+        )
+        .select([
+          'heart.id AS id',
+          'heart.from_user_id AS from_user_id',
+          'heart.to_user_id AS to_user_id',
+          'profile.id AS profile_id',
+          'profile.name AS profile_name',
+          'profile.dob AS dob',
+        ])
+        .addSelect(
+          `CASE
+          WHEN photo.photo IS NOT NULL
+          THEN CONCAT('${baseUrl}/${uploadPath}/profile/', photo.photo)
+          ELSE NULL
+        END`,
+          'profile_photo',
+        )
+        .where('heart.from_user_id = :userId', { userId })
+        .orderBy('heart.id', 'DESC')
+        .getRawMany();
 
-    const result = await Promise.all(
-      data.map(async (item) => {
-        const scores =
-          await this.userTraitLedgerService.getDomainCompatibilityScores(
-            userId,
-            item.to_user_id,
-          );
+      const result = await Promise.all(
+        data.map(async (item) => {
+          const scores =
+            await this.userTraitLedgerService.getDomainCompatibilityScores(
+              userId,
+              item.to_user_id,
+            );
 
-        return {
-          ...item,
-          compatibility_score: Number(scores.overallCompatibility.toFixed(2)),
-        };
-      }),
-    );
+          return {
+            ...item,
+            age: item.dob ? calculateAge(item.dob) : null,
+            compatibility_score: Number(scores.overallCompatibility.toFixed(2)),
+          };
+        }),
+      );
 
-    return {
-      success: true,
-      data: result,
-    };
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (error) {
+      console.error('Error fetching heart details:', error);
+      throw error;
+    }
   }
 
   async getheartnewlikes(userId: number) {
-    const baseUrl = process.env.BASE_URL;
-    const uploadPath = process.env.UPLOAD_PATH;
+    try {
+      const baseUrl = process.env.BASE_URL;
+      const uploadPath = process.env.UPLOAD_PATH;
 
-    const data = await this.heartRepo
-      .createQueryBuilder('heart')
-      .leftJoin('profiles', 'profile', 'profile.user_id = heart.to_user_id')
-      .leftJoin('user_photo', 'photo', 'photo.user_id = heart.to_user_id')
-      .select([
-        'heart.id AS id',
-        'heart.from_user_id AS from_user_id',
-        'heart.to_user_id AS to_user_id',
-        'profile.id AS profile_id',
-        'profile.name AS profile_name',
-        'profile.dob AS dob',
-      ])
-      .addSelect(
-        `CONCAT('${baseUrl}/${uploadPath}/profile/', photo.photo)`,
-        'profile_photo',
-      )
-      .where('heart.from_user_id = :userId', { userId })
-      .orderBy('heart.id', 'DESC')
-      .getRawMany();
+      const data = await this.heartRepo
+        .createQueryBuilder('heart')
+        .leftJoin('profiles', 'profile', 'profile.user_id = heart.to_user_id')
+        .leftJoin(
+          'user_photo',
+          'photo',
+          'photo.user_id = heart.to_user_id AND photo.is_primary = true',
+        )
+        .select([
+          'heart.id AS id',
+          'heart.from_user_id AS from_user_id',
+          'heart.to_user_id AS to_user_id',
+          'profile.id AS profile_id',
+          'profile.name AS profile_name',
+          'profile.dob AS dob',
+        ])
+        .addSelect(
+          `CASE
+          WHEN photo.photo IS NOT NULL
+          THEN CONCAT('${baseUrl}/${uploadPath}/profile/', photo.photo)
+          ELSE NULL
+        END`,
+          'profile_photo',
+        )
+        .where('heart.from_user_id = :userId', { userId })
+        .orderBy('heart.id', 'DESC')
+        .getRawMany();
 
-    const formattedData = await Promise.all(
-      data.map(async (item) => {
-        // User who liked current user
-        const targetUserId = Number(item.to_user_id);
+      const formattedData = await Promise.all(
+        data.map(async (item) => {
+          const targetUserId = Number(item.to_user_id);
 
-        // ✅ Age
-        let age: number | null = null;
-        if (item.dob) {
-          age = calculateAge(item.dob);
-        }
+          const age = item.dob ? calculateAge(item.dob) : null;
 
-        // ✅ Star Check
-        const starExists = await this.starRepo.findOne({
-          where: {
-            from_user_id: userId,
-            to_user_id: targetUserId,
-          },
-        });
+          const starExists = await this.starRepo.findOne({
+            where: {
+              from_user_id: userId,
+              to_user_id: targetUserId,
+            },
+          });
 
-        // ✅ Compatibility Score
-        const domainCompatibilityScores =
-          await this.userTraitLedgerService.getDomainCompatibilityScores(
-            userId,
-            targetUserId,
-          );
+          const domainCompatibilityScores =
+            await this.userTraitLedgerService.getDomainCompatibilityScores(
+              userId,
+              targetUserId,
+            );
 
-        const compatibilityScore = Number(
-          domainCompatibilityScores.overallCompatibility.toFixed(2),
-        );
+          return {
+            id: item.id,
+            from_user_id: item.from_user_id,
+            to_user_id: item.to_user_id,
+            profile_id: item.profile_id,
+            profile_name: item.profile_name,
+            profile_photo: item.profile_photo,
+            age,
+            is_starred: !!starExists,
+            compatibility_score: Number(
+              domainCompatibilityScores.overallCompatibility.toFixed(2),
+            ),
+          };
+        }),
+      );
 
-        return {
-          id: item.id,
-          from_user_id: item.from_user_id,
-          to_user_id: item.to_user_id,
-          profile_id: item.profile_id,
-          profile_name: item.profile_name,
-          profile_photo: item.profile_photo,
-          age,
-          is_starred: !!starExists,
-          compatibility_score: compatibilityScore,
-        };
-      }),
-    );
-
-    return {
-      success: true,
-      data: formattedData,
-    };
+      return {
+        success: true,
+        data: formattedData,
+      };
+    } catch (error) {
+      console.error('Error fetching heart new likes:', error);
+      throw error;
+    }
   }
 
   // DELETE HEART

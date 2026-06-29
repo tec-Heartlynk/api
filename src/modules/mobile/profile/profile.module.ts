@@ -8,7 +8,8 @@ import { CategoryQuestionOption } from '../questions_option/option/category-ques
 import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 import { CrossModule } from '../cross/cross.module'; // ✅ FIX
 import { UserPhotoModule } from '../user-photo/user-photo.module';
-import { UserTraitLedgerModule } from '../user_trait_ledger/user-trait-ledger.module'; // ✅ FIX
+import { UserTraitLedgerModule } from '../user_trait_ledger/user-trait-ledger.module';
+import { BlockModule } from '../block-user/block.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { UserTraitLedgerModule } from '../user_trait_ledger/user-trait-ledger.mo
     UsersModule,
     UserTraitLedgerModule,
     UserPhotoModule,
-    CrossModule, // ✅ FIXED
+    CrossModule,
+    BlockModule,
   ],
 
   controllers: [ProfileController],

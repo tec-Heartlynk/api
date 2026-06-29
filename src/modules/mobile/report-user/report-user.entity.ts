@@ -3,9 +3,11 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity('report_user')
+@Unique(['from_user_id', 'to_user_id'])
 export class ReportUser {
   @PrimaryGeneratedColumn()
   id!: number;

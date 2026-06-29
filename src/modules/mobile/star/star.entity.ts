@@ -4,10 +4,12 @@ import {
   Column,
   JoinColumn,
   ManyToOne,
+  Unique,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
 @Entity('star')
+@Unique(['from_user_id', 'to_user_id'])
 export class StarAction {
   @PrimaryGeneratedColumn()
   id!: number;

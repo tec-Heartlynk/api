@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Not, MoreThan } from 'typeorm';
 import {
@@ -51,7 +55,8 @@ export class DiscoverService {
     minAge?: number,
     maxAge?: number,
     maxDistance?: number,
-    interests?: string,
+    iamInterests?: string,
+    compareCompatibilityScore?: number,
   ) {
     // ✅ Current User Profile
     const myProfile = await this.profileRepo.findOne({
@@ -70,7 +75,9 @@ export class DiscoverService {
     const myLat = Number(myProfile.latitude);
     const myLng = Number(myProfile.longitude);
 
-    const WhoOpenMeeting = myProfile.who_open_meeting;
+    // const WhoOpenMeeting = myProfile.who_open_meeting;
+    let WhoOpenMeeting =
+      iamInterests?.trim() || myProfile.who_open_meeting || null;
 
     //Current User Interests
 
@@ -148,18 +155,27 @@ export class DiscoverService {
       .andWhere('settings.profile_visibility = true')
       .andWhere('user.status = 10');
 
+    const selectedMinAge = minAge ?? myProfile.min_age ?? null;
+    const selectedMaxAge = maxAge ?? myProfile.max_age ?? null;
+
+    if (selectedMinAge !== null && selectedMaxAge !== null) {
+      if (selectedMinAge > selectedMaxAge) {
+        throw new BadRequestException('min_age cannot be greater than max_age');
+      }
+    }
+
     // ✅ Dynamic Age Filter
-    if (minAge && maxAge) {
+    if (selectedMinAge && selectedMaxAge) {
       query.andWhere(
         `
       DATE_PART(
         'year',
         AGE(CURRENT_DATE, profile.dob)
-      ) BETWEEN :minAge AND :maxAge
+      ) BETWEEN :selectedMinAge AND :selectedMaxAge
       `,
         {
-          minAge,
-          maxAge,
+          selectedMinAge,
+          selectedMaxAge,
         },
       );
     }
@@ -168,9 +184,12 @@ export class DiscoverService {
     const normalizedWhoOpenMeeting = WhoOpenMeeting?.trim()?.toLowerCase();
 
     // ✅ WhoOpenMeeting Filter
-    if (normalizedWhoOpenMeeting) {
+    if (
+      normalizedWhoOpenMeeting &&
+      normalizedWhoOpenMeeting.toLowerCase() !== 'everyone'
+    ) {
       query.andWhere('LOWER(TRIM(profile.who_open_meeting)) IN (:...values)', {
-        values: [normalizedWhoOpenMeeting],
+        values: [normalizedWhoOpenMeeting.toLowerCase()],
       });
     }
 
@@ -181,11 +200,13 @@ export class DiscoverService {
       });
     }
 
-    // ✅ Dynamic Distance Filter
-    if (maxDistance !== undefined && maxDistance !== null) {
-      const distanceLimit = Number(maxDistance); // dynamic input (10, 30, 50...)
+    const dynamicMaxDistance = maxDistance ?? myProfile.max_distance ?? null;
 
-      query.orWhere(
+    // ✅ Dynamic Distance Filter
+    if (dynamicMaxDistance !== undefined && dynamicMaxDistance !== null) {
+      const distanceLimit = Number(dynamicMaxDistance); // dynamic input (10, 30, 50...)
+
+      query.andWhere(
         `
     profile.latitude IS NOT NULL
     AND profile.longitude IS NOT NULL
@@ -200,26 +221,25 @@ export class DiscoverService {
           SIN(RADIANS(CAST(profile.latitude AS DOUBLE PRECISION)))
         ))
       )
-    ) <= :maxDistance
+    ) <= :dynamicMaxDistance
     `,
         {
           myLat,
           myLng,
-          maxDistance: distanceLimit,
+          dynamicMaxDistance: distanceLimit,
         },
       );
     }
 
     // ✅ Dynamic + Default Interest Filter
 
-    const finalInterests =
-      interests && interests.trim().length > 0
-        ? interests.split(',').map((item) => item.trim())
-        : myInterests.map((item) => item.toString());
+    const finalInterests = (userPreferenceData?.interests || []).map((item) =>
+      item.toString().trim(),
+    );
 
     if (finalInterests.length > 0) {
       const interestConditions: string[] = [];
-      const interestParams: any = {};
+      const interestParams: Record<string, string> = {};
 
       finalInterests.forEach((id, index) => {
         interestConditions.push(`up.interests::text LIKE :interest${index}`);
@@ -257,7 +277,9 @@ export class DiscoverService {
 
     query.skip((page - 1) * finalLimit).take(finalLimit);
 
-    const [profiles, totalProfiles] = await query.getManyAndCount();
+    const fetchLimit = limit * 5;
+
+    const profiles = await query.take(fetchLimit).getMany();
 
     // ✅ Response Data
     const data = await Promise.all(
@@ -402,6 +424,7 @@ export class DiscoverService {
             : 'hidden',
 
           distance_unit: profileSettings?.distance ? 'km' : 'hidden',
+          who_open_meeting: profile?.who_open_meeting,
 
           // ✅ Photos
           photos:
@@ -453,6 +476,30 @@ export class DiscoverService {
       return distanceA - distanceB;
     });
 
+    // filter for min_compatibility_scroe
+
+    const finalMinCompatibilityScore = Number(
+      compareCompatibilityScore !== undefined &&
+        compareCompatibilityScore !== null
+        ? compareCompatibilityScore
+        : (myProfile.min_compatibility_scroe ?? 40),
+    );
+
+    const filteredProfiles = data.filter(
+      (profile) =>
+        Number(profile.compatibility_scores) >= finalMinCompatibilityScore,
+    );
+
+    const totalProfiles = filteredProfiles.length;
+
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    const paginatedProfiles = filteredProfiles.slice(startIndex, endIndex);
+
+    //console.log(query.getSql());
+    //console.log(query.getQueryAndParameters());
+
     return {
       success: true,
 
@@ -468,7 +515,7 @@ export class DiscoverService {
 
       crossed_count: crossedCount,
 
-      data,
+      data: paginatedProfiles,
     };
   }
 }

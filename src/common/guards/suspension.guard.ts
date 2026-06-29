@@ -14,17 +14,17 @@ export class SuspensionGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
-    // 👇 ADD HERE (START OF FUNCTION)
     const publicRoutes = [
       '/mobile/auth/send-otp',
       '/mobile/auth/verify-otp',
       '/mobile/auth/login',
       '/mobile/auth/register',
-
       '/admin/employee/login',
     ];
 
-    if (publicRoutes.some((route) => request.url.includes(route))) {
+    const currentPath = request.path || request.url;
+
+    if (publicRoutes.some((route) => currentPath.includes(route))) {
       return true;
     }
 
@@ -39,12 +39,26 @@ export class SuspensionGuard implements CanActivate {
         user.userId || user.id,
       );
 
+    const allowedSuspendedRoutes = [
+      '/api/mobile/suspension/:id/message',
+      '/api/mobile/suspension/:id/chat',
+    ];
+
+    const currentRoute = request.route?.path;
+
+    const isAllowed = allowedSuspendedRoutes.includes(currentRoute);
+
+    if (userSuspension?.suspended && isAllowed) {
+      return true;
+    }
+
     if (userSuspension?.suspended) {
       throw new ForbiddenException({
         success: false,
         suspended: true,
         suspension_id: userSuspension.data?.suspension_id,
-        message: userSuspension.data?.messages?.[0]?.message,
+        message:
+          'Your account is suspended. You can only communicate with support.',
         suspended_until: userSuspension.data?.suspended_until,
       });
     }

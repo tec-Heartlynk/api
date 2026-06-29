@@ -5,6 +5,7 @@ import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from '../users/users.service';
 import { CrossService } from '../cross/cross.service';
+
 import {
   Injectable,
   InternalServerErrorException,
@@ -22,6 +23,8 @@ import { CategoryQuestionOption } from '../questions_option/option/category-ques
 import { QuizQuestion } from '../../admin/quiz-question/quiz-question.entity';
 import { UserPhotoService } from '../user-photo/user-photo.service';
 import { UserTraitLedgerService } from '../user_trait_ledger/user-trait-ledger.service';
+import { BlockService } from '../block-user/block.service';
+import { UpdateDiscoveryPreferenceDto } from './dto/update-discovery-preference.dto';
 
 @Injectable()
 export class ProfileService {
@@ -37,6 +40,7 @@ export class ProfileService {
     @InjectRepository(QuizQuestion)
     private readonly quizQuestionRepo: Repository<QuizQuestion>,
     private readonly userTraitLedgerService: UserTraitLedgerService,
+    private readonly blockService: BlockService,
   ) {}
 
   // Create profile for user
@@ -229,6 +233,12 @@ export class ProfileService {
         {} as Record<string, number>,
       );
 
+      const user_blocked = targetUserId
+        ? await this.blockService.isBlocked(userId, targetUserId)
+        : null;
+
+      const IsuserBlocked = !!user_blocked;
+
       return {
         success: true,
 
@@ -252,12 +262,18 @@ export class ProfileService {
 
           photos: user.photos?.map((item) => ({
             id: item.id,
+            is_primary: item.is_primary,
             photo: `${process.env.BASE_URL}/${process.env.UPLOAD_PATH}/profile/${item.photo}`,
           })),
 
           compatibility_scores: compatibilityScore,
           compatibility_message: getCompatibilityMessage(compatibilityScore),
           alignment_breakdown: alignmentBreakdown,
+          is_user_blocked: IsuserBlocked,
+          min_age: profile.min_age,
+          max_age: profile.max_age,
+          max_distance: profile.max_distance,
+          min_compatibility_scroe: profile.min_compatibility_scroe,
 
           user: {
             id: user.id,
@@ -617,5 +633,76 @@ export class ProfileService {
 
       throw error;
     }
+  }
+
+  async updateDiscoveryPreference(
+    userId: number,
+    dto: UpdateDiscoveryPreferenceDto,
+  ) {
+    const profile = await this.profileRepo.findOne({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    // At least one field is required
+    if (Object.keys(dto).length === 0) {
+      throw new BadRequestException(
+        'Please provide at least one field to update',
+      );
+    }
+
+    const minAge = dto.min_age ?? profile.min_age;
+    const maxAge = dto.max_age ?? profile.max_age;
+
+    if (
+      minAge !== null &&
+      maxAge !== null &&
+      minAge !== undefined &&
+      maxAge !== undefined &&
+      minAge > maxAge
+    ) {
+      throw new BadRequestException('min_age cannot be greater than max_age');
+    }
+
+    if (dto.min_age !== undefined) {
+      profile.min_age = dto.min_age;
+    }
+
+    if (dto.max_age !== undefined) {
+      profile.max_age = dto.max_age;
+    }
+
+    if (dto.max_distance !== undefined) {
+      profile.max_distance = dto.max_distance;
+    }
+
+    if (dto.min_compatibility_scroe !== undefined) {
+      profile.min_compatibility_scroe = dto.min_compatibility_scroe;
+    }
+
+    if (dto.who_open_meeting !== undefined) {
+      profile.who_open_meeting = dto.who_open_meeting;
+    }
+
+    await this.profileRepo.save(profile);
+
+    return {
+      success: true,
+      message: 'Discovery preferences updated successfully',
+      data: {
+        min_age: profile.min_age,
+        max_age: profile.max_age,
+        max_distance: profile.max_distance,
+        min_compatibility_scroe: profile.min_compatibility_scroe,
+        who_open_meeting: profile.who_open_meeting,
+      },
+    };
   }
 }

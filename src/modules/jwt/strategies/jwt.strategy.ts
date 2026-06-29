@@ -25,12 +25,28 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   // 👇 CHANGE HERE (req add kiya)
-  async validate(req: Request, payload: any) {
-    const authHeader = req.headers['authorization'];
+  //   async validate(req: Request, payload: any) {
+  //     const authHeader = req.headers['authorization'];
 
+  //     const token = authHeader?.split(' ')[1];
+
+  //     // 🔥 BLACKLIST CHECK
+  //     if (token && (await this.blacklistService.isBlacklisted(token))) {
+  //       throw new UnauthorizedException('Token is blacklisted');
+  //     }
+
+  //     return {
+  //       userId: payload.id,
+  //       email: payload.email,
+  //       role: payload.role,
+  //     };
+  //   }
+  // }
+
+  async validate(req: Request, payload: any) {
+    const authHeader = req.headers.authorization;
     const token = authHeader?.split(' ')[1];
 
-    // 🔥 BLACKLIST CHECK
     if (token && (await this.blacklistService.isBlacklisted(token))) {
       throw new UnauthorizedException('Token is blacklisted');
     }

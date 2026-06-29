@@ -4,7 +4,9 @@ import {
   Body,
   Req,
   Get,
+  Patch,
   Query,
+  Param,
   DefaultValuePipe,
   ParseIntPipe,
   UseGuards,
@@ -17,7 +19,7 @@ import { ConfigService } from '@nestjs/config';
 import { SendMessageNotificationDto } from './dto/send-message-notification.dto';
 import { JwtAuthGuard } from '../../jwt/strategies/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard) // 🔐 ALL ROUTES PROTECTED
+@UseGuards(JwtAuthGuard) // ALL ROUTES PROTECTED
 @Controller('mobile/notifications')
 export class NotificationsController {
   constructor(
@@ -66,5 +68,15 @@ export class NotificationsController {
       success: true,
       message: 'Message notification sent successfully',
     };
+  }
+
+  @Patch('mark-all-read')
+  async markAllAsRead(@Req() req) {
+    return this.notificationsService.markAllAsRead(req.user.userId);
+  }
+
+  @Patch(':id/read')
+  async markAsRead(@Req() req, @Param('id', ParseIntPipe) id: number) {
+    return this.notificationsService.markAsRead(req.user.userId, id);
   }
 }

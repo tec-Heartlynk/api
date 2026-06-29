@@ -35,6 +35,17 @@ export class CrossService {
       data: saved,
     };
   }
+
+  // find cross by from user and to user
+  async isCrossed(fromUserId: number, toUserId: number) {
+    return this.crossRepo.findOne({
+      where: {
+        to_user_id: fromUserId,
+        from_user_id: toUserId,
+      },
+    });
+  }
+
   // HISTORY
   async getcrossdetails(userId: number) {
     const data = await this.crossRepo.find({

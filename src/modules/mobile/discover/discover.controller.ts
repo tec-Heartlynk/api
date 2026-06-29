@@ -15,7 +15,9 @@ export class DiscoverController {
     @Query('minAge') minAge: number,
     @Query('maxAge') maxAge: number,
     @Query('maxDistance') maxDistance: number,
-    @Query('interests') interests: string,
+    @Query('iamInterests') iamInterests: string,
+    @Query('compareCompatibilityScore')
+    compareCompatibilityScore?: number,
   ) {
     return this.discoverService.getAllProfilesWithDistance(
       req.user.userId,
@@ -24,7 +26,8 @@ export class DiscoverController {
       minAge,
       maxAge,
       maxDistance,
-      interests,
+      iamInterests,
+      compareCompatibilityScore,
     );
   }
 }

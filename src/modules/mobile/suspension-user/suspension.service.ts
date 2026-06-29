@@ -154,6 +154,9 @@ export class SuspensionService {
   */
 
   async sendMessage(suspensionId: number, dto: SendMessageDto) {
+    console.log('suspensionId', suspensionId);
+    console.log('dto.sender:', dto.sender);
+    console.log('dto.message:', dto.message);
     const suspension = await this.suspensionRepo.findOne({
       where: {
         id: suspensionId,
@@ -171,7 +174,11 @@ export class SuspensionService {
       message: dto.message,
     });
 
-    await this.messageRepo.save(message);
+    console.log('Before save:', message);
+
+    const savedMessage = await this.messageRepo.save(message);
+
+    console.log('After save:', savedMessage);
 
     return {
       success: true,
